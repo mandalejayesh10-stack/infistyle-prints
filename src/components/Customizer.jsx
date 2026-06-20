@@ -191,6 +191,21 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
   const [editorZoom, setEditorZoom] = useState(100);
   const [qrText, setQrText] = useState('https://infistyle.in');
 
+  // Interactive Upload Modal states
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isQrScanMockOpen, setIsQrScanMockOpen] = useState(false);
+  const [recentlyUploaded, setRecentlyUploaded] = useState([
+    'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=200&fit=crop', // school/education mockup representing "Universal University"
+    'https://images.unsplash.com/photo-1607799279861-4dd421887fb3?w=200&fit=crop'  // screen terminal code block mockup
+  ]);
+
+  // AI Prompt Modal states
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [aiCustomPrompt, setAiCustomPrompt] = useState('');
+  const [aiStatusMessage, setAiStatusMessage] = useState(null);
+
+  const fileInputRef = useRef(null);
+
   // Templates Sidebar Filter state (Step 2)
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndustry, setSelectedIndustry] = useState('all');
@@ -275,7 +290,6 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
 
   // Generate cart configuration details
   const getCustomConfig = () => {
-    // Extract name/company from canvas fields if they exist
     const compText = canvasElements.find(el => el.id === 'comp-name' || el.id?.includes('comp'))?.content || 'InfiStyle Print';
     const nameText = canvasElements.find(el => el.id === 'name' || el.id?.includes('name'))?.content || '';
     
@@ -373,7 +387,6 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
     setCanvasBgColor(template.bg || '#ffffff');
     setCanvasElements(JSON.parse(JSON.stringify(template.elements)));
     
-    // Back elements template fallback
     const backSide = [
       { id: 'back-logo', type: 'graphic', content: 'globe', x: 235, y: 100, width: 50, height: 50, rotation: 0, color: '#ffcc00', isLocked: false },
       { id: 'back-text', type: 'text', content: template.name === 'Start from Scratch' ? 'DESIGN LAB' : template.elements.find(el => el.id === 'comp-name')?.content || 'Nexus', x: 160, y: 165, width: 200, height: 25, fontSize: 16, fontFamily: 'Outfit', fontWeight: 'bold', color: '#ffcc00', rotation: 0, isLocked: false, align: 'center' }
@@ -381,16 +394,13 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
     setBackElements(backSide);
     setBackBgColor(template.bg || '#ffffff');
 
-    // Initialize history
     setHistoryStack([JSON.stringify(template.elements)]);
     setHistoryIndex(0);
     
     setCustomizerStep('editor');
   };
 
-  // Draggable Mechanics
-  const activeElementRef = useRef(null);
-
+  // Dragging Mechanics
   const handleElementMouseDown = (e, element) => {
     if (element.isLocked) return;
     e.stopPropagation();
@@ -426,7 +436,7 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
     window.addEventListener('mouseup', handleMouseUp);
   };
 
-  // Resizing element corner drag
+  // Scaling Handles
   const handleResizeMouseDown = (e, element) => {
     e.stopPropagation();
     const startX = e.clientX;
@@ -444,7 +454,6 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
           const w = Math.max(30, Math.round(initWidth + deltaX));
           const h = Math.max(15, Math.round(initHeight + deltaY));
           
-          // Re-scale font size if it is a text box
           let fSize = el.fontSize;
           if (el.type === 'text') {
             const ratio = w / initWidth;
@@ -471,7 +480,7 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
     window.addEventListener('mouseup', handleMouseUp);
   };
 
-  // Rotator handle drag
+  // Rotation Handles
   const handleRotateMouseDown = (e, element) => {
     e.stopPropagation();
     const elementNode = document.getElementById(`canvas-layer-${element.id}`);
@@ -483,7 +492,7 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
 
     const handleMouseMove = (moveEvent) => {
       const rad = Math.atan2(moveEvent.clientY - centerY, moveEvent.clientX - centerX);
-      let deg = rad * (180 / Math.PI) - 90; // Align with top handle direction
+      let deg = rad * (180 / Math.PI) - 90;
       if (deg < 0) deg += 360;
 
       updateLayers(prev => prev.map(el => {
@@ -506,7 +515,7 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
     window.addEventListener('mouseup', handleMouseUp);
   };
 
-  // Quick Layer manipulations
+  // Layer Actions
   const handleDeleteElement = (id) => {
     updateLayers(prev => prev.filter(el => el.id !== id));
     if (activeElementId === id) setActiveElementId(null);
@@ -533,7 +542,7 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
     }));
   };
 
-  // Canvas insertions (Step 3 panels)
+  // Canvas insertions
   const handleAddText = () => {
     const newText = {
       id: 'el-text-' + Date.now(),
@@ -557,7 +566,7 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
     const newShape = {
       id: 'el-shape-' + Date.now(),
       type: 'shape',
-      content: shapeType, // 'rect-solid' | 'circle-solid' | 'triangle-solid'
+      content: shapeType,
       x: Math.round(canvasDims.width / 2 - 40),
       y: Math.round(canvasDims.height / 2 - 40),
       width: 80,
@@ -574,7 +583,7 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
     const newGraphic = {
       id: 'el-graphic-' + Date.now(),
       type: 'graphic',
-      content: graphicType, // 'globe' | 'shield' | 'leaf' etc.
+      content: graphicType,
       x: Math.round(canvasDims.width / 2 - 25),
       y: Math.round(canvasDims.height / 2 - 25),
       width: 50,
@@ -619,15 +628,106 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
     setActiveElementId(newImg.id);
   };
 
+  // Native Browser File Upload Handlers
+  const handleNativeFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      processNativeFile(e.target.files[0]);
+    }
+  };
+
+  const processNativeFile = (file) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64Url = event.target.result;
+      
+      // Save to recently uploaded array state
+      setRecentlyUploaded(prev => [base64Url, ...prev]);
+      
+      // Place directly onto canvas
+      handleImageUploadSimulate(base64Url);
+      
+      // Close uploads overlay
+      setIsUploadModalOpen(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // AI Card Design Generator Logic
+  const handleAiCardGeneration = (theme) => {
+    setAiStatusMessage(`🔄 AI is composing a premium '${theme}' card layout...`);
+    
+    setTimeout(() => {
+      let bg = '#ffffff';
+      let elements = [];
+
+      if (theme.includes('Tech') || theme.includes('Startup')) {
+        bg = '#0f172a'; // slate dark
+        elements = [
+          { id: 'ai-logo', type: 'graphic', content: 'tech', x: 235, y: 50, width: 50, height: 50, rotation: 0, color: '#ffcc00', isLocked: false },
+          { id: 'ai-comp', type: 'text', content: 'APEX DIGITAL INC.', x: 110, y: 115, width: 300, height: 25, fontSize: 16, fontFamily: 'Space Grotesk', fontWeight: 'bold', color: '#ffffff', rotation: 0, isLocked: false, align: 'center' },
+          { id: 'ai-tag', type: 'text', content: 'Building the Future of Code', x: 110, y: 140, width: 300, height: 18, fontSize: 9, fontFamily: 'Space Grotesk', color: '#94a3b8', rotation: 0, isLocked: false, align: 'center' },
+          { id: 'ai-name', type: 'text', content: 'Siddharth Roy', x: 110, y: 180, width: 300, height: 35, fontSize: 22, fontFamily: 'Space Grotesk', fontWeight: 'bold', color: '#ffcc00', rotation: 0, isLocked: false, align: 'center' },
+          { id: 'ai-title', type: 'text', content: 'Lead Cloud Architect', x: 110, y: 215, width: 300, height: 18, fontSize: 10, fontFamily: 'Space Grotesk', color: '#94a3b8', rotation: 0, isLocked: false, align: 'center' },
+          { id: 'ai-contact', type: 'text', content: '📱 +91 99887 76655  |  ✉️ sid@apex.digital', x: 60, y: 255, width: 400, height: 18, fontSize: 9, fontFamily: 'Space Grotesk', color: '#ffffff', rotation: 0, isLocked: false, align: 'center' }
+        ];
+      } else if (theme.includes('Lawyer') || theme.includes('Law')) {
+        bg = '#111111'; // pure black
+        elements = [
+          { id: 'ai-border', type: 'shape', content: 'rect-border', x: 15, y: 15, width: 490, height: 270, rotation: 0, color: '#d4af37', isLocked: true },
+          { id: 'ai-logo', type: 'graphic', content: 'shield', x: 240, y: 45, width: 40, height: 40, rotation: 0, color: '#d4af37', isLocked: false },
+          { id: 'ai-comp', type: 'text', content: 'ROY & ASSOCIATES LLP', x: 110, y: 100, width: 300, height: 25, fontSize: 14, fontFamily: 'Cinzel', fontWeight: 'bold', color: '#d4af37', rotation: 0, isLocked: false, align: 'center' },
+          { id: 'ai-name', type: 'text', content: 'Advocate Raghav Roy', x: 110, y: 145, width: 300, height: 35, fontSize: 20, fontFamily: 'Playfair Display', fontWeight: 'bold', color: '#ffffff', rotation: 0, isLocked: false, align: 'center' },
+          { id: 'ai-title', type: 'text', content: 'SENIOR SUPREME COURT COUNSEL', x: 110, y: 180, width: 300, height: 18, fontSize: 8, fontFamily: 'Outfit', color: '#d4af37', rotation: 0, isLocked: false, align: 'center' },
+          { id: 'ai-divider', type: 'shape', content: 'rect-solid', x: 210, y: 210, width: 100, height: 1, rotation: 0, color: 'rgba(255, 255, 255, 0.2)', isLocked: true },
+          { id: 'ai-contact', type: 'text', content: '📞 +91 11 2345 6789  |  ✉️ contact@roylaw.in', x: 60, y: 230, width: 400, height: 18, fontSize: 9, fontFamily: 'Outfit', color: '#ffffff', rotation: 0, isLocked: false, align: 'center' },
+          { id: 'ai-addr', type: 'text', content: '📍 Supreme Court Chambers, New Delhi', x: 60, y: 250, width: 400, height: 18, fontSize: 8, fontFamily: 'Outfit', color: '#999999', rotation: 0, isLocked: false, align: 'center' }
+        ];
+      } else if (theme.includes('Cafe') || theme.includes('Coffee')) {
+        bg = '#fcfaf2'; // cream white
+        elements = [
+          { id: 'ai-logo', type: 'graphic', content: 'leaf', x: 40, y: 40, width: 35, height: 35, rotation: 0, color: '#059669', isLocked: false },
+          { id: 'ai-comp', type: 'text', content: 'THE GREEN BEAN CAFE', x: 85, y: 48, width: 250, height: 25, fontSize: 15, fontFamily: 'Space Grotesk', fontWeight: 'bold', color: '#111111', rotation: 0, isLocked: false },
+          { id: 'ai-name', type: 'text', content: 'Rohan Deshmukh', x: 40, y: 115, width: 250, height: 35, fontSize: 24, fontFamily: 'Playfair Display', fontWeight: 'bold', color: '#059669', rotation: 0, isLocked: false },
+          { id: 'ai-title', type: 'text', content: 'Founder & Brewmaster', x: 40, y: 150, width: 250, height: 20, fontSize: 11, fontFamily: 'Outfit', color: '#666666', rotation: 0, isLocked: false },
+          { id: 'ai-divider', type: 'shape', content: 'rect-solid', x: 40, y: 185, width: 440, height: 2, rotation: 0, color: '#059669', isLocked: false },
+          { id: 'ai-phone', type: 'text', content: '📞 +91 98333 22110', x: 40, y: 205, width: 150, height: 18, fontSize: 10, fontFamily: 'Outfit', color: '#333333', rotation: 0, isLocked: false },
+          { id: 'ai-email', type: 'text', content: '✉️ hello@greenbean.cafe', x: 200, y: 205, width: 170, height: 18, fontSize: 10, fontFamily: 'Outfit', color: '#333333', rotation: 0, isLocked: false },
+          { id: 'ai-addr', type: 'text', content: '📍 Pali Hill, Bandra West, Mumbai', x: 40, y: 230, width: 300, height: 18, fontSize: 10, fontFamily: 'Outfit', color: '#666666', rotation: 0, isLocked: false }
+        ];
+      } else {
+        // Creative Studio
+        bg = '#ffffff';
+        elements = [
+          { id: 'ai-logo', type: 'graphic', content: 'bolt', x: 40, y: 40, width: 30, height: 30, rotation: 0, color: '#ea580c', isLocked: false },
+          { id: 'ai-comp', type: 'text', content: 'CREATIVE SPARK', x: 80, y: 45, width: 200, height: 25, fontSize: 15, fontFamily: 'Outfit', fontWeight: 'bold', color: '#111111', rotation: 0, isLocked: false },
+          { id: 'ai-name', type: 'text', content: 'Neha Nair', x: 40, y: 120, width: 220, height: 35, fontSize: 24, fontFamily: 'Outfit', fontWeight: 'bold', color: '#111111', rotation: 0, isLocked: false },
+          { id: 'ai-title', type: 'text', content: 'Creative Director', x: 40, y: 155, width: 220, height: 20, fontSize: 11, fontFamily: 'Outfit', color: '#ea580c', rotation: 0, isLocked: false },
+          { id: 'ai-divider', type: 'shape', content: 'rect-solid', x: 40, y: 190, width: 440, height: 2, rotation: 0, color: '#e2e8f0', isLocked: true },
+          { id: 'ai-phone', type: 'text', content: '📱 +91 99988 87766', x: 40, y: 210, width: 140, height: 18, fontSize: 10, fontFamily: 'Outfit', color: '#444444', rotation: 0, isLocked: false },
+          { id: 'ai-email', type: 'text', content: '✉️ neha@spark.studio', x: 200, y: 210, width: 160, height: 18, fontSize: 10, fontFamily: 'Outfit', color: '#444444', rotation: 0, isLocked: false }
+        ];
+      }
+
+      setCanvasBgColor(bg);
+      setCanvasElements(elements);
+      setActiveElementId(elements[0]?.id || null);
+      
+      setHistoryStack([JSON.stringify(elements)]);
+      setHistoryIndex(0);
+
+      setAiStatusMessage(null);
+      setIsAiModalOpen(false);
+      setAiCustomPrompt('');
+    }, 1200);
+  };
+
   const activeElement = (view === 'front' ? canvasElements : backElements).find(el => el.id === activeElementId);
 
   // Filters for templates grid (Step 2)
   const filteredTemplates = getAvailableTemplates().filter(t => {
-    // Search keyword query matching name or elements content
     const matchQuery = t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.elements.some(e => e.type === 'text' && e.content.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    // Background color filtering
     let matchColor = true;
     if (selectedColorFilter !== 'all') {
       const bgHex = t.bg || '#ffffff';
@@ -640,6 +740,15 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
 
   return (
     <div style={styles.container}>
+      {/* Native hidden file input for device uploads */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleNativeFileChange} 
+        accept="image/*" 
+        style={{ display: 'none' }} 
+      />
+
       {/* ------------------ STEP 1: SPEC CONFIGURATION ------------------ */}
       {customizerStep === 'config' && (
         <div style={styles.configScreen} className="animate-fade-in">
@@ -834,10 +943,7 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
                   Browse designs 🎨
                 </button>
                 <button 
-                  onClick={() => {
-                    const empty = { bg: '#ffffff', name: 'Blank Template', elements: [] };
-                    handleSelectTemplate(empty);
-                  }}
+                  onClick={() => setIsUploadModalOpen(true)}
                   style={styles.uploadDesignBtn}
                 >
                   Upload design / Start Blank 📤
@@ -960,12 +1066,9 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
             {/* Right grid gallery list */}
             <div style={styles.templatesGalleryGridCol}>
               <div style={styles.templatesGrid}>
-                {/* Upload your own / Blank layout card */}
+                {/* Upload design card */}
                 <div 
-                  onClick={() => {
-                    const empty = { bg: '#ffffff', name: 'Blank Template', elements: [] };
-                    handleSelectTemplate(empty);
-                  }}
+                  onClick={() => setIsUploadModalOpen(true)}
                   style={{...styles.templateGalleryCard, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc', border: '2px dashed var(--color-border)'}}
                 >
                   <span style={{fontSize: '36px'}}>📤</span>
@@ -1020,11 +1123,20 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
       {/* ------------------ STEP 3: STUDIO EDITOR WORKSPACE ------------------ */}
       {customizerStep === 'editor' && (
         <div style={styles.editorScreen} className="animate-fade-in">
-          {/* Top Figma/Canva-Style Header Bar */}
+          {/* Top Vistaprint-Style Branded White Header Bar */}
           <div style={styles.editorTopBar}>
             <div style={styles.editorHeaderLeft}>
-              <span style={styles.brandIcon}>⬡</span>
-              <span style={styles.activeFileName}>InfiStyle Studio - {product.name}</span>
+              <svg viewBox="0 0 24 24" fill="#15a1e2" style={{width: '22px', height: '22px'}}>
+                <polygon points="12 2 2 22 22 22" />
+              </svg>
+              <span style={styles.vistaprintLogoText}>
+                vistaprint<span style={{color: '#15a1e2'}}>.</span>
+              </span>
+              <span style={styles.toolbarDivider}></span>
+              <span style={styles.activeFileName}>{product.name}</span>
+              <span style={styles.savedStatusText}>
+                🗲 Saved to My Projects
+              </span>
               <div style={styles.undoRedoGroup}>
                 <button onClick={handleUndo} disabled={historyIndex <= 0} style={styles.historyBtn} title="Undo">↶</button>
                 <button onClick={handleRedo} disabled={historyIndex >= historyStack.length - 1} style={styles.historyBtn} title="Redo">↷</button>
@@ -1194,15 +1306,18 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
                 </div>
               )}
 
-              {/* Image Upload simulation tab */}
+              {/* Real Uploads Tab Panel */}
               {activeTab === 'uploads' && (
                 <div className="animate-fade-in">
                   <h4 style={styles.panelTitle}>Add Photos & Logos</h4>
+                  
+                  {/* Click to open the custom upload Modal overlay */}
                   <div 
-                    onClick={() => handleImageUploadSimulate('https://images.unsplash.com/photo-1557683316-973673baf926?w=200&fit=crop')}
+                    onClick={() => setIsUploadModalOpen(true)}
                     style={styles.uploadBoxSimulate}
                   >
-                    <span>📁 Click to Upload file</span>
+                    <span style={{fontSize: '24px', color: '#ffcc00'}}>📂</span>
+                    <span style={{fontWeight: '700', fontSize:'13px', marginTop:'8px'}}>Click to Upload file</span>
                     <span style={{fontSize: '11px', color: '#666', marginTop:'4px'}}>Supports JPG, PNG, SVG</span>
                   </div>
 
@@ -1225,7 +1340,7 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
                 </div>
               )}
 
-              {/* Graphics presets (Shapes/Icons) tab */}
+              {/* Graphics presets tab */}
               {activeTab === 'graphics' && (
                 <div className="animate-fade-in" style={{maxHeight:'80vh', overflowY:'auto'}}>
                   <h4 style={styles.panelTitle}>Add Vector Graphics</h4>
@@ -1311,18 +1426,26 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
               )}
             </div>
 
-            {/* Core Canvas Workspace panel */}
+            {/* Core Canvas Workspace panel (Light Grey background like Vistaprint) */}
             <div style={styles.canvasWorkspaceArea}>
+              
               {/* Contextual Editor toolbar above canvas */}
               <div style={styles.contextualToolbar}>
                 <button style={styles.toolbarBtn} onClick={() => handleAddText()}>📝 Text</button>
                 <button style={styles.toolbarBtn} onClick={() => handleAddShape('rect-solid')}>⬛ Rectangle</button>
                 <button style={styles.toolbarBtn} onClick={() => handleAddShape('circle-solid')}>⚫ Circle</button>
                 <span style={styles.toolbarDivider}></span>
-                <span style={{fontSize: '11px', color: '#666', fontStyle: 'italic'}}>Double-click elements to edit text.</span>
+                
+                {/* AI Design compose trigger button */}
+                <button 
+                  style={{...styles.toolbarBtn, backgroundColor: '#0f62fe', color:'#ffffff', padding:'4px 10px', borderRadius:'4px'}} 
+                  onClick={() => setIsAiModalOpen(true)}
+                >
+                  ✨ Edit with AI
+                </button>
               </div>
 
-              {/* The absolute-positioned canvas viewport */}
+              {/* Canvas viewport wrapper */}
               <div 
                 style={{
                   ...styles.canvasContainerScale,
@@ -1340,11 +1463,10 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
                   }}
                   onClick={() => setActiveElementId(null)}
                 >
-                  {/* Safety Area guide boundary lines */}
                   <div style={styles.safetyGuideLine}></div>
                   <div style={styles.bleedGuideLine}></div>
                   
-                  {/* Layer rendering */}
+                  {/* Layers */}
                   {(view === 'front' ? canvasElements : backElements).map(el => {
                     const isSelected = activeElementId === el.id;
                     
@@ -1373,43 +1495,16 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
                           justifyContent: el.align === 'center' ? 'center' : 'flex-start'
                         }}
                       >
-                        {/* Selected overlay bounding box handles */}
                         {isSelected && !el.isLocked && (
                           <>
-                            {/* Rotate handle */}
-                            <div 
-                              onMouseDown={(e) => handleRotateMouseDown(e, el)}
-                              style={styles.rotateHandleAnchor} 
-                              title="Drag to Rotate"
-                            ></div>
-                            {/* Resize handle */}
-                            <div 
-                              onMouseDown={(e) => handleResizeMouseDown(e, el)}
-                              style={styles.resizeHandleAnchor} 
-                              title="Drag to Resize"
-                            ></div>
-                            {/* Duplicate handle */}
-                            <div 
-                              onClick={(e) => { e.stopPropagation(); handleDuplicateElement(el); }}
-                              style={styles.duplicateHandleAnchor} 
-                              title="Duplicate layer"
-                            >📋</div>
-                            {/* Lock handle */}
-                            <div 
-                              onClick={(e) => { e.stopPropagation(); handleToggleLock(el.id); }}
-                              style={styles.lockHandleAnchor} 
-                              title="Lock coordinates"
-                            >🔓</div>
-                            {/* Delete handle */}
-                            <div 
-                              onClick={(e) => { e.stopPropagation(); handleDeleteElement(el.id); }}
-                              style={styles.deleteHandleAnchor} 
-                              title="Delete layer"
-                            >✕</div>
+                            <div onMouseDown={(e) => handleRotateMouseDown(e, el)} style={styles.rotateHandleAnchor} title="Rotate"></div>
+                            <div onMouseDown={(e) => handleResizeMouseDown(e, el)} style={styles.resizeHandleAnchor} title="Resize"></div>
+                            <div onClick={(e) => { e.stopPropagation(); handleDuplicateElement(el); }} style={styles.duplicateHandleAnchor} title="Duplicate">📋</div>
+                            <div onClick={(e) => { e.stopPropagation(); handleToggleLock(el.id); }} style={styles.lockHandleAnchor} title="Lock">🔓</div>
+                            <div onClick={(e) => { e.stopPropagation(); handleDeleteElement(el.id); }} style={styles.deleteHandleAnchor} title="Delete">✕</div>
                           </>
                         )}
 
-                        {/* Render based on layer type */}
                         {el.type === 'text' && (
                           <div 
                             style={{
@@ -1471,7 +1566,7 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
                 </div>
               </div>
 
-              {/* Bottom workspace action row (Zoom bar, front/back buttons) */}
+              {/* Bottom bar control elements */}
               <div style={styles.bottomWorkspaceControls}>
                 <div style={styles.zoomControlBlock}>
                   <button onClick={() => setEditorZoom(prev => Math.max(50, prev - 10))} style={styles.zoomBtn}>-</button>
@@ -1503,14 +1598,12 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
       {customizerStep === 'orientation' && (
         <div style={styles.orientationScreen} className="animate-fade-in">
           <div style={styles.orientationLayout}>
-            {/* Left: 3D perspective mockup frame */}
+            {/* Left perspective columns */}
             <div style={styles.orientationVisualCol}>
               <h3 style={{fontSize: '18px', fontWeight: '700', marginBottom: '24px', textAlign: 'center'}}>Premium Mockup Representation</h3>
               
-              {/* Business card skew mockup */}
               {isCard && (
                 <div style={styles.mockupHandFrame}>
-                  {/* Outer hand illustration/photo wrap simulated */}
                   <div style={styles.cardThreeDHolder}>
                     <div 
                       style={{
@@ -1519,7 +1612,6 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
                         borderRadius: corners === 'rounded' ? '18px' : '4px'
                       }}
                     >
-                      {/* Scale render contents of elements onto mockup card */}
                       {(view === 'front' ? canvasElements : backElements).map(el => (
                         <div 
                           key={el.id}
@@ -1547,7 +1639,6 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
                 </div>
               )}
 
-              {/* T-Shirt mockup overlay */}
               {isTshirt && (
                 <div style={styles.clothingMockupFrame}>
                   <svg width="340" height="340" viewBox="0 0 100 100" style={{fill: canvasBgColor, stroke: '#cbd5e1', strokeWidth:'1'}}>
@@ -1572,7 +1663,6 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
                 </div>
               )}
 
-              {/* Mug mockup wrap */}
               {isDrinkware && (
                 <div style={styles.mugMockupFrame}>
                   <div style={styles.mugHandle}></div>
@@ -1612,7 +1702,7 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
               </div>
             </div>
 
-            {/* Right: Checkout spec panel options */}
+            {/* Right configuration side columns */}
             <div style={styles.orientationFormCol}>
               <h2 style={{fontSize: '28px', fontWeight: '800'}}>Approve & Review</h2>
               <p style={{fontSize: '14px', color: '#555', marginTop: '8px'}}>Please check the placement of all text elements. Ensure your layout fits entirely within the safety boundaries before adding to cart.</p>
@@ -1662,6 +1752,163 @@ const Customizer = ({ product, onAddToCart, onBuyNow, onGoBack }) => {
                   Add to Cart 🛍️
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------ VISTAPRINT MODAL OVERLAY: UPLOADS ------------------ */}
+      {isUploadModalOpen && (
+        <div style={styles.modalOverlay} onClick={() => setIsUploadModalOpen(false)}>
+          <div style={styles.uploadModal} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <h3 style={styles.modalTitle}>Upload your design</h3>
+              <button onClick={() => setIsUploadModalOpen(false)} style={styles.modalCloseBtn}>✕</button>
+            </div>
+            
+            <div style={styles.modalBody}>
+              {/* Left Column: Drag & Drop zone */}
+              <div style={styles.modalLeftColumn}>
+                <div 
+                  style={styles.modalDropzone}
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                      processNativeFile(e.dataTransfer.files[0]);
+                    }
+                  }}
+                >
+                  <div style={styles.modalDropzoneContent}>
+                    <span style={{fontSize: '48px', color: '#15a1e2'}}>☁️</span>
+                    <button style={styles.deviceUploadBtn}>
+                      Upload from this device
+                    </button>
+                    <button style={styles.phoneUploadBtn} onClick={(e) => { e.stopPropagation(); setIsQrScanMockOpen(true); }}>
+                      Upload from phone
+                    </button>
+                    <div style={{fontSize: '13px', color: '#666', marginTop: '12px'}}>
+                      or drag and drop here
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Recently Uploaded Grid */}
+              <div style={styles.modalRightColumn}>
+                <div style={styles.specsTemplateLink}>
+                  <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
+                    <span style={{fontSize:'18px'}}>📖</span>
+                    <span style={{fontWeight:'700', fontSize:'14px'}}>Specs and templates</span>
+                  </div>
+                  <span>❯</span>
+                </div>
+
+                <div style={{marginTop: '24px'}}>
+                  <h4 style={styles.recentlyUploadedHeader}>Recently uploaded</h4>
+                  <div style={styles.recentlyUploadedGrid}>
+                    {recentlyUploaded.map((src, idx) => (
+                      <div 
+                        key={idx}
+                        onClick={() => {
+                          handleImageUploadSimulate(src);
+                          setIsUploadModalOpen(false);
+                        }}
+                        style={styles.recentImgCard}
+                      >
+                        <img src={src} alt="recent upload" style={{width:'100%', height:'100%', objectFit:'cover'}} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------ QR CODE MOCK MODAL: UPLOAD FROM PHONE ------------------ */}
+      {isQrScanMockOpen && (
+        <div style={styles.modalOverlay} onClick={() => setIsQrScanMockOpen(false)}>
+          <div style={{...styles.uploadModal, width: '400px'}} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <h3 style={styles.modalTitle}>Upload from Phone</h3>
+              <button onClick={() => setIsQrScanMockOpen(false)} style={styles.modalCloseBtn}>✕</button>
+            </div>
+            <div style={{padding: '24px', display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center'}}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#111111" strokeWidth="2" style={{width:'120px', height:'120px', marginBottom: '16px'}}>
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <rect x="7" y="7" width="3" height="3" fill="#111111" />
+                <rect x="14" y="7" width="3" height="3" fill="#111111" />
+                <rect x="7" y="14" width="3" height="3" fill="#111111" />
+                <rect x="14" y="14" width="4" height="4" fill="#ffcc00" />
+              </svg>
+              <div style={{fontWeight: '700', fontSize: '15px', color: '#111', marginBottom: '8px'}}>Scan QR Code to Link Device</div>
+              <div style={{fontSize: '13px', color: '#555'}}>Scan this QR code using your smartphone camera to upload photos directly from your camera roll into InfiStyle Studio.</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------ AI GENERATOR PROMPT POPUP ------------------ */}
+      {isAiModalOpen && (
+        <div style={styles.modalOverlay} onClick={() => setIsAiModalOpen(false)}>
+          <div style={{...styles.uploadModal, width: '500px'}} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <h3 style={styles.modalTitle}>✨ InfiStyle AI Design Assistant</h3>
+              <button onClick={() => setIsAiModalOpen(false)} style={styles.modalCloseBtn}>✕</button>
+            </div>
+            
+            <div style={{padding: '24px'}}>
+              <p style={{fontSize: '13px', color: '#555', marginBottom: '16px'}}>
+                Compose a complete premium layout instantly. Pick one of our curated corporate themes or enter a custom prompt.
+              </p>
+              
+              {/* Preset Themes List */}
+              <div style={styles.aiPresetThemeList}>
+                <div onClick={() => handleAiCardGeneration('Modern Tech Startup')} style={styles.aiPresetCard}>
+                  <span>💻</span>
+                  <span>Tech Startup</span>
+                </div>
+                <div onClick={() => handleAiCardGeneration('Executive Law Firm')} style={styles.aiPresetCard}>
+                  <span>⚖️</span>
+                  <span>Law Firm</span>
+                </div>
+                <div onClick={() => handleAiCardGeneration('Organic Cafe')} style={styles.aiPresetCard}>
+                  <span>☕</span>
+                  <span>Organic Cafe</span>
+                </div>
+                <div onClick={() => handleAiCardGeneration('Creative Studio')} style={styles.aiPresetCard}>
+                  <span>🎨</span>
+                  <span>Creative Agency</span>
+                </div>
+              </div>
+
+              <div style={{height: '1px', backgroundColor: '#e2e8f0', margin: '20px 0'}}></div>
+
+              <label style={styles.panelLabel}>Custom AI Prompt</label>
+              <div style={{display:'flex', gap: '8px', marginTop: '6px'}}>
+                <input 
+                  type="text"
+                  placeholder="e.g. minimalist florist logo, black card..."
+                  value={aiCustomPrompt}
+                  onChange={(e) => setAiCustomPrompt(e.target.value)}
+                  style={styles.aiInputText}
+                />
+                <button 
+                  onClick={() => handleAiCardGeneration(aiCustomPrompt || 'Modern Tech Startup')}
+                  style={styles.aiGenerateBtn}
+                >
+                  Generate
+                </button>
+              </div>
+
+              {aiStatusMessage && (
+                <div style={styles.aiStatusBlock}>
+                  {aiStatusMessage}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1859,7 +2106,7 @@ const styles = {
   },
   browseDesignsBtn: {
     flex: '1.2',
-    backgroundColor: '#0f62fe',
+    backgroundColor: '#15a1e2',
     color: '#ffffff',
     border: 'none',
     borderRadius: '6px',
@@ -1868,7 +2115,7 @@ const styles = {
     fontSize: '14px',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
-    boxShadow: '0 4px 12px rgba(15, 98, 254, 0.15)'
+    boxShadow: '0 4px 12px rgba(21, 161, 226, 0.15)'
   },
   uploadDesignBtn: {
     flex: '1',
@@ -2061,56 +2308,66 @@ const styles = {
     border: '1px solid #ddd'
   },
   editorScreen: {
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#f3f4f6',
     borderRadius: '12px',
     overflow: 'hidden',
     border: '1.5px solid var(--color-border)',
     boxShadow: 'var(--shadow-md)'
   },
   editorTopBar: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#ffffff',
     height: '56px',
     padding: '0 20px',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    color: '#ffffff',
-    borderBottom: '1px solid #1e293b'
+    color: '#1e293b',
+    borderBottom: '1px solid #cbd5e1'
   },
   editorHeaderLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: '16px'
+    gap: '12px'
   },
-  brandIcon: {
-    fontSize: '24px',
-    color: '#ffcc00',
-    fontWeight: 'bold'
+  vistaprintLogoText: {
+    color: '#0f172a',
+    fontWeight: '800',
+    fontSize: '18px',
+    letterSpacing: '-0.5px'
   },
   activeFileName: {
     fontWeight: '700',
-    fontSize: '14px',
-    letterSpacing: '0.2px'
+    fontSize: '13px',
+    color: '#334155'
+  },
+  savedStatusText: {
+    fontSize: '10px',
+    color: '#059669',
+    backgroundColor: '#f0fdf4',
+    padding: '2px 6px',
+    borderRadius: '4px',
+    fontWeight: '600'
   },
   undoRedoGroup: {
     display: 'flex',
-    gap: '4px',
-    backgroundColor: '#1e293b',
-    borderRadius: '6px',
-    padding: '2px'
+    gap: '2px',
+    border: '1px solid #cbd5e1',
+    borderRadius: '4px',
+    padding: '1px',
+    marginLeft: '10px'
   },
   historyBtn: {
     background: 'none',
     border: 'none',
-    color: '#ffffff',
-    fontSize: '16px',
+    color: '#475569',
+    fontSize: '14px',
     cursor: 'pointer',
-    width: '28px',
-    height: '28px',
+    width: '24px',
+    height: '24px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: '4px'
+    borderRadius: '2px'
   },
   editorHeaderRight: {
     display: 'flex',
@@ -2118,15 +2375,15 @@ const styles = {
     gap: '16px'
   },
   priceBanner: {
-    fontSize: '18px',
+    fontSize: '16px',
     fontWeight: '800',
-    color: '#ffcc00'
+    color: '#0f172a'
   },
   previewApproveBtn: {
-    backgroundColor: '#ffcc00',
-    color: '#111111',
+    backgroundColor: '#15a1e2',
+    color: '#ffffff',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '4px',
     padding: '8px 16px',
     fontWeight: '700',
     fontSize: '13px',
@@ -2144,7 +2401,7 @@ const styles = {
     flexDirection: 'column',
     alignItems: 'center',
     padding: '12px 0',
-    borderRight: '1px solid #1e293b',
+    borderRight: '1px solid #cbd5e1',
     flexShrink: '0'
   },
   sidebarTabBtn: {
@@ -2202,10 +2459,10 @@ const styles = {
   addTextBtn: {
     width: '100%',
     padding: '10px',
-    backgroundColor: '#0f62fe',
+    backgroundColor: '#15a1e2',
     color: '#ffffff',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '4px',
     fontWeight: '700',
     fontSize: '13px',
     cursor: 'pointer',
@@ -2253,7 +2510,9 @@ const styles = {
     cursor: 'pointer',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center'
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    transition: 'all 0.2s ease'
   },
   presetImagesGrid: {
     display: 'grid',
@@ -2321,19 +2580,20 @@ const styles = {
     justifyContent: 'center',
     padding: '20px',
     position: 'relative',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    backgroundColor: '#f3f4f6'
   },
   contextualToolbar: {
     position: 'absolute',
     top: '16px',
     backgroundColor: '#ffffff',
     borderRadius: '8px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
     padding: '6px 12px',
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid #cbd5e1',
     zIndex: '10'
   },
   toolbarBtn: {
@@ -2343,12 +2603,13 @@ const styles = {
     fontWeight: '600',
     cursor: 'pointer',
     padding: '4px 8px',
-    borderRadius: '4px'
+    borderRadius: '4px',
+    color: '#334155'
   },
   toolbarDivider: {
     width: '1px',
     height: '16px',
-    backgroundColor: '#ddd'
+    backgroundColor: '#cbd5e1'
   },
   canvasContainerScale: {
     position: 'relative',
@@ -2357,8 +2618,8 @@ const styles = {
   },
   editorCanvas: {
     borderRadius: '4px',
-    boxShadow: '0 12px 32px rgba(0,0,0,0.08)',
-    border: '1px solid #ddd',
+    boxShadow: '0 12px 32px rgba(0,0,0,0.06)',
+    border: '1px solid #b2c5d4',
     position: 'relative',
     overflow: 'hidden'
   },
@@ -2368,7 +2629,7 @@ const styles = {
     left: '10px',
     right: '10px',
     bottom: '10px',
-    border: '1px dotted rgba(15, 98, 254, 0.4)',
+    border: '1px dotted rgba(21, 161, 226, 0.4)',
     pointerEvents: 'none',
     borderRadius: '2px'
   },
@@ -2457,7 +2718,7 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: '24px',
-    borderTop: '1px solid #e2e8f0',
+    borderTop: '1px solid #cbd5e1',
     paddingTop: '16px'
   },
   zoomControlBlock: {
@@ -2633,14 +2894,14 @@ const styles = {
   orientationBuyNowBtn: {
     width: '100%',
     padding: '14px',
-    backgroundColor: '#0f62fe',
+    backgroundColor: '#15a1e2',
     color: '#ffffff',
     border: 'none',
     borderRadius: '6px',
     fontWeight: '700',
     fontSize: '14px',
     cursor: 'pointer',
-    boxShadow: '0 4px 12px rgba(15, 98, 254, 0.15)'
+    boxShadow: '0 4px 12px rgba(21, 161, 226, 0.15)'
   },
   orientationCartBtn: {
     width: '100%',
@@ -2652,6 +2913,197 @@ const styles = {
     fontWeight: '700',
     fontSize: '14px',
     cursor: 'pointer'
+  },
+
+  // ------------------ VISTAPRINT MODAL STYLES ------------------
+  modalOverlay: {
+    position: 'fixed',
+    top: '0',
+    left: '0',
+    right: '0',
+    bottom: '0',
+    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: '999',
+    backdropFilter: 'blur(3px)'
+  },
+  uploadModal: {
+    backgroundColor: '#ffffff',
+    width: '800px',
+    borderRadius: '12px',
+    boxShadow: '0 20px 50px rgba(0, 0, 0, 0.15)',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden'
+  },
+  modalHeader: {
+    padding: '16px 24px',
+    borderBottom: '1px solid #cbd5e1',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  modalTitle: {
+    fontSize: '18px',
+    fontWeight: '800',
+    color: '#0f172a'
+  },
+  modalCloseBtn: {
+    background: 'none',
+    border: 'none',
+    fontSize: '18px',
+    cursor: 'pointer',
+    color: '#94a3b8'
+  },
+  modalBody: {
+    display: 'flex',
+    height: '420px'
+  },
+  modalLeftColumn: {
+    flex: '1',
+    padding: '24px',
+    borderRight: '1px solid #cbd5e1',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center'
+  },
+  modalDropzone: {
+    border: '2.5px dashed #15a1e2',
+    borderRadius: '12px',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    backgroundColor: '#f8fafc',
+    transition: 'all 0.2s ease'
+  },
+  modalDropzoneContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    textAlign: 'center',
+    gap: '12px',
+    padding: '20px'
+  },
+  deviceUploadBtn: {
+    backgroundColor: '#15a1e2',
+    color: '#ffffff',
+    border: 'none',
+    padding: '12px 24px',
+    borderRadius: '4px',
+    fontWeight: '700',
+    fontSize: '14px',
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(21, 161, 226, 0.15)'
+  },
+  phoneUploadBtn: {
+    backgroundColor: '#ffffff',
+    color: '#0f172a',
+    border: '1.5px solid #cbd5e1',
+    padding: '10px 20px',
+    borderRadius: '4px',
+    fontWeight: '600',
+    fontSize: '13px',
+    cursor: 'pointer',
+    marginTop: '4px'
+  },
+  modalRightColumn: {
+    width: '320px',
+    padding: '24px',
+    backgroundColor: '#f8fafc',
+    overflowY: 'auto'
+  },
+  specsTemplateLink: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '12px',
+    backgroundColor: '#ffffff',
+    borderRadius: '6px',
+    border: '1px solid #cbd5e1',
+    cursor: 'pointer'
+  },
+  recentlyUploadedHeader: {
+    fontSize: '13px',
+    fontWeight: '700',
+    color: '#64748b',
+    textTransform: 'uppercase',
+    marginBottom: '12px',
+    letterSpacing: '0.5px'
+  },
+  recentlyUploadedGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '8px'
+  },
+  recentImgCard: {
+    height: '70px',
+    borderRadius: '6px',
+    border: '1.5px solid #cbd5e1',
+    overflow: 'hidden',
+    cursor: 'pointer',
+    backgroundColor: '#ffffff'
+  },
+  emptyRecentMsg: {
+    fontSize: '11px',
+    color: '#94a3b8',
+    gridColumn: 'span 3',
+    textAlign: 'center',
+    padding: '20px 0',
+    lineHeight: '1.4'
+  },
+
+  // ------------------ AI PROMPT MODAL STYLES ------------------
+  aiPresetThemeList: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '12px',
+    marginTop: '12px'
+  },
+  aiPresetCard: {
+    border: '1.5px solid #cbd5e1',
+    borderRadius: '8px',
+    padding: '12px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    backgroundColor: '#ffffff',
+    transition: 'all 0.2s ease',
+    fontSize: '14px',
+    fontWeight: '600'
+  },
+  aiInputText: {
+    flex: '1',
+    padding: '10px 14px',
+    borderRadius: '6px',
+    border: '1.5px solid #cbd5e1',
+    outline: 'none',
+    fontSize: '13px'
+  },
+  aiGenerateBtn: {
+    padding: '10px 20px',
+    backgroundColor: '#0f172a',
+    color: '#ffffff',
+    border: 'none',
+    borderRadius: '6px',
+    fontWeight: '700',
+    fontSize: '13px',
+    cursor: 'pointer'
+  },
+  aiStatusBlock: {
+    marginTop: '16px',
+    padding: '12px',
+    backgroundColor: '#eff6ff',
+    border: '1px solid #bfdbfe',
+    borderRadius: '6px',
+    color: '#1d4ed8',
+    fontSize: '12px',
+    textAlign: 'center',
+    fontWeight: '600'
   }
 };
 
