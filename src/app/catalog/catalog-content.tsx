@@ -135,7 +135,7 @@ export default function CatalogContent() {
   };
 
   // Unique categories list
-  const categoryOptions = ['All', ...PRODUCT_CATALOG.map(c => c.name)];
+  const categoryOptions = ['All', ...Array.from(new Set(PRODUCT_CATALOG.map(c => c.name)))];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

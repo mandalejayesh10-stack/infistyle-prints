@@ -170,7 +170,7 @@ export const PRODUCT_CATALOG: Category[] = [
     ]
   },
   {
-    name: 'Clothing', // Displayed as Custom Polo T-shirts
+    name: 'Custom Polo T-shirts', // Displayed as Custom Polo T-shirts
     slug: 'custom-polo-t-shirts',
     description: 'Premium pique custom branded polo shirts.',
     image: 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?auto=format&fit=crop&w=600&q=80',
