@@ -10,8 +10,8 @@
 An end-to-end, production-ready, custom online printing e-commerce platform designed for **Infistyle India**. It implements a high-contrast, premium signature Yellow (`#F5B800`) and White design language. The platform empowers corporate clients and retail customers to seamlessly design, preview, and order custom business cards, apparel, drinkware, stationery, and marketing materials directly inside their browser.
 
 ### 🌐 Live Links
-* **Live Web Application:** [https://infistyle-hackathon-1l93.vercel.app/](https://infistyle-hackathon-1l93.vercel.app/)
-* **Admin Dashboard:** [https://infistyle-hackathon-1l93.vercel.app/admin](https://infistyle-hackathon-1l93.vercel.app/admin)
+* **Live Web Application:** [https://infistyle-prints.vercel.app/](https://infistyle-prints.vercel.app/)
+* **Admin Dashboard:** [https://infistyle-prints.vercel.app/admin](https://infistyle-prints.vercel.app/admin)
 
 ---
 
@@ -51,7 +51,7 @@ An end-to-end, production-ready, custom online printing e-commerce platform desi
 The project is structured as a unified monorepo hosting both the **Next.js Frontend** and the **NestJS Backend**:
 
 ```
-infistyle-hackathon/
+infistyle-prints/
 ├── backend/                  # NestJS Backend Service
 │   ├── prisma/               # Prisma Database Schema & Seed Script
 │   │   ├── schema.prisma     # PostgreSQL database models
@@ -153,7 +153,7 @@ npm run build
 
 The repository is fully pre-configured for Vercel's **Multi-Service (Monorepo) Deployments** via the root `vercel.json` file. 
 
-1. Create a new project on Vercel and import the `infistyle-hackathon` repository.
+1. Create a new project on Vercel and import the `infistyle-prints` repository.
 2. Vercel will automatically read `vercel.json` and configure two separate deployments:
    * **Frontend Service** located at `/` (built using Next.js).
    * **Backend Service** located at `/backend` (built using NestJS).
