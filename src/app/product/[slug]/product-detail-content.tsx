@@ -3,14 +3,14 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { api } from '@/lib/aws/api';
 import { getProductBySlug } from '@/lib/catalog';
 import { Star, Truck, Check, ChevronDown, ChevronUp, Layers, HelpCircle, FileDown, Upload } from 'lucide-react';
 
 export default function ProductDetailContent() {
   const { slug } = useParams() as { slug: string };
   const router = useRouter();
-  const supabase = createClient();
+
 
   const productData = getProductBySlug(slug);
   const [dbProduct, setDbProduct] = useState<any>(null);
@@ -28,25 +28,32 @@ export default function ProductDetailContent() {
 
   useEffect(() => {
     const fetchDbProduct = async () => {
-      const hasSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && 
-                          process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://placeholder-url.supabase.co';
-
-      if (hasSupabase) {
-        try {
-          const { data, error } = await supabase
-            .from('products')
-            .select('*')
-            .eq('slug', slug)
-            .single();
-          
-          if (!error && data) {
-            setDbProduct(data);
+      try {
+        const res = await api.getCatalog();
+        if (res && res.categories) {
+          let found: any = null;
+          for (const cat of res.categories) {
+            const item = cat.items.find((i: any) => i.slug === slug);
+            if (item) {
+              found = {
+                name: item.name,
+                slug: item.slug,
+                base_price: item.price,
+                features: item.features,
+                category: cat.name,
+                images: [cat.image],
+              };
+              break;
+            }
+          }
+          if (found) {
+            setDbProduct(found);
             setLoadingDb(false);
             return;
           }
-        } catch (err) {
-          console.error('Error fetching dynamic product details:', err);
         }
+      } catch (err) {
+        console.error('Error fetching dynamic product details from Hono API:', err);
       }
 
       // Check localStorage fallback
@@ -67,7 +74,7 @@ export default function ProductDetailContent() {
     };
 
     fetchDbProduct();
-  }, [slug, supabase]);
+  }, [slug]);
 
   if (loadingDb) {
     return (

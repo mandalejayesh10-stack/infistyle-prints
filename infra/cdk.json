@@ -1,0 +1,32 @@
+{
+  "app": "npx ts-node bin/infra.ts",
+  "watch": {
+    "include": [
+      "**"
+    ],
+    "exclude": [
+      "README.md",
+      "cdk.out",
+      "tsconfig.json",
+      "package.json",
+      "package-lock.json",
+      "node_modules"
+    ]
+  },
+  "context": {
+    "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": true,
+    "@aws-cdk/core:stackRelativeExports": true,
+    "@aws-cdk/aws-rds:databaseProxyUniqueResourceName": true,
+    "@aws-cdk/aws-codedeploy:grantQueueReadAccess": true,
+    "@aws-cdk/aws-s3:createDefaultLoggingPolicy": true,
+    "@aws-cdk/aws-sns-subscriptions:restrictSqsDescryption": true,
+    "@aws-cdk/aws-apigateway:requestValidatorUniqueId": true,
+    "@aws-cdk/core:checkVerificationKeyJSX": true,
+    "@aws-cdk/core:target-debug-log": "true",
+    "@aws-cdk/aws-iam:minimizePolicies": true,
+    "@aws-cdk/core:validateMapKeyDuplicates": true,
+    "@aws-cdk/aws-s3:keepNotificationInImportedBucket": true,
+    "@aws-cdk/aws-s3:enableMinimumTLSValViaBucketPolicy": true,
+    "@aws-cdk/aws-s3:enableMinimumTLSValViaBucketPolicyForOac": true
+  }
+}

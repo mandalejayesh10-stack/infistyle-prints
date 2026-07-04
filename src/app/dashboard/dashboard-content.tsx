@@ -3,7 +3,8 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { api } from '@/lib/aws/api';
+import { cognitoClient } from '@/lib/aws/client';
 import { 
   User, Briefcase, Heart, ShoppingBag, Eye, Settings, 
   MapPin, LogOut, CheckCircle, Clock, Truck, ShieldAlert, Sparkles, RefreshCw
@@ -46,7 +47,7 @@ const MOCK_FAVOURITES = [
 export default function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const supabase = createClient();
+
 
   const currentTab = searchParams?.get('tab') || 'projects';
   const [user, setUser] = useState<any>(null);
@@ -62,60 +63,66 @@ export default function DashboardContent() {
     const fetchUserData = async () => {
       setLoading(true);
 
-      const hasSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && 
-                          process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://placeholder-url.supabase.co';
-
-      if (!hasSupabase) {
+      const accessToken = localStorage.getItem('infistyle_access_token');
+      if (!accessToken) {
         setProjects(MOCK_PROJECTS);
         setOrders(MOCK_ORDERS);
         setLoading(false);
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
+      try {
+        const cognitoUser = await cognitoClient.getUser(accessToken);
+        setUser({ id: cognitoUser.username, email: cognitoUser.email, name: cognitoUser.name });
+        setProfile({ name: cognitoUser.name, email: cognitoUser.email });
 
-      if (user) {
-        // Fetch custom profile
-        const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-        setProfile(prof);
-
-        // Fetch user designs
-        const { data: designs } = await supabase.from('designs').select('*, products(name, slug)').eq('user_id', user.id);
-        if (designs) {
-          setProjects(designs.map(d => ({
-            id: d.id,
-            name: d.qr_data || 'Unnamed Design',
-            slug: d.products?.slug || 'standard-visiting-cards',
-            date: new Date(d.created_at).toLocaleDateString(),
-            thumbnail: d.front_url || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=150&q=80'
+        // 1. Fetch user designs from Hono REST API
+        const designsRes = await api.getDesigns();
+        if (designsRes && designsRes.designs) {
+          setProjects(designsRes.designs.map((d: any) => ({
+            id: d.designId,
+            name: d.name || 'Untitled Design',
+            slug: d.productSlug || 'standard-visiting-cards',
+            date: new Date(d.createdAt).toLocaleDateString(),
+            thumbnail: d.previewUrl || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=150&q=80'
           })));
         }
 
-        // Fetch user orders
-        const { data: ords } = await supabase.from('orders').select('*, order_items(*)').eq('user_id', user.id);
-        if (ords) {
-          setOrders(ords.map(o => ({
-            id: o.id,
-            date: new Date(o.created_at).toLocaleDateString(),
-            productName: o.order_items?.[0]?.product_name || 'Custom Print Bundle',
-            qty: o.order_items?.[0]?.qty || 100,
-            total: Number(o.total),
-            status: o.status as any,
-            paymentMethod: o.payment_method,
-            thumbnail: o.order_items?.[0]?.file_url || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=150&q=80'
+        // 2. Fetch user orders from Hono REST API
+        const ordersRes = await api.getOrders();
+        if (ordersRes && ordersRes.orders) {
+          setOrders(ordersRes.orders.map((o: any) => ({
+            id: o.orderId,
+            date: new Date(o.createdAt).toLocaleDateString(),
+            productName: o.items?.[0]?.productName || 'Custom Print Bundle',
+            qty: o.items?.[0]?.qty || 100,
+            total: Number(o.totalAmount),
+            status: o.orderStatus.toLowerCase() as any,
+            paymentMethod: o.paymentMethod.toLowerCase(),
+            thumbnail: o.items?.[0]?.thumbnail || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=150&q=80',
+            address: o.shippingAddress
+          })));
+
+          // Extract addresses from orders history
+          const addrs = ordersRes.orders.map((o: any) => o.shippingAddress).filter(Boolean);
+          setAddresses(addrs.map((a: any, index: number) => ({
+            id: `addr_${index}`,
+            name: a.name,
+            line1: a.line1,
+            city: a.city,
+            state: a.state,
+            pincode: a.pincode,
+            formatted: a.formatted
           })));
         }
-
-        // Fetch addresses
-        const { data: addrs } = await supabase.from('addresses').select('*').eq('user_id', user.id);
-        if (addrs) setAddresses(addrs);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
       }
       setLoading(false);
     };
 
     fetchUserData();
-  }, [supabase]);
+  }, []);
 
   const handleTabChange = (tabName: string) => {
     const params = new URLSearchParams(searchParams?.toString() || '');
@@ -124,8 +131,8 @@ export default function DashboardContent() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
+    cognitoClient.signOut();
+    window.location.href = '/';
   };
 
   // Reorder flow

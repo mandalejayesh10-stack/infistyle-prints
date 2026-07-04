@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Script from 'next/script';
 import confetti from 'canvas-confetti';
-import { createClient } from '@/lib/supabase/client';
+import { api } from '@/lib/aws/api';
+import { cognitoClient } from '@/lib/aws/client';
 import { getProductBySlug } from '@/lib/catalog';
 import { 
   MapPin, ShieldCheck, CreditCard, ChevronRight, HelpCircle, Check,
@@ -35,7 +36,7 @@ const MOCK_ADDRESSES = [
 
 export default function CheckoutContent() {
   const router = useRouter();
-  const supabase = createClient();
+
 
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [user, setUser] = useState<any>(null);
@@ -72,22 +73,24 @@ export default function CheckoutContent() {
   useEffect(() => {
     setMounted(true);
     
-    // Check if user session exists
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-      if (user) {
-        // extract name
-        const names = (user.user_metadata?.full_name || '').split(' ');
+    // Check if user session exists in Cognito
+    const accessToken = localStorage.getItem('infistyle_access_token');
+    if (accessToken) {
+      cognitoClient.getUser(accessToken).then((cognitoUser) => {
+        setUser({ id: cognitoUser.username, email: cognitoUser.email, name: cognitoUser.name });
+        const names = (cognitoUser.name || '').split(' ');
         setFirstName(names[0] || '');
         setLastName(names.slice(1).join(' ') || '');
-      }
-    });
+      }).catch((err) => {
+        console.error('Error fetching Cognito user:', err);
+      });
+    }
 
     const stored = localStorage.getItem('infistyle_cart');
     if (stored) {
       setCartItems(JSON.parse(stored));
     }
-  }, [supabase]);
+  }, []);
 
   // Pricing calculations
   const subtotal = cartItems.reduce((acc, item) => {
@@ -238,11 +241,21 @@ export default function CheckoutContent() {
     try {
       const addressFormatted = `${addressSearch}, ${city}, ${state} - ${pincode}`;
       
-      // 1. Save Address in Supabase
-      const { data: addressData, error: addressError } = await supabase
-        .from('addresses')
-        .insert({
-          user_id: user?.id || '00000000-0000-0000-0000-000000000000', // anonymous fallback if mock
+      const orderPayload = {
+        items: cartItems.map(item => ({
+          productName: item.productName,
+          qty: item.qty,
+          unitPrice: item.unitPrice,
+          corners: item.corners,
+          finish: item.finish,
+          speed: item.speed,
+          thumbnail: item.thumbnail
+        })),
+        totalAmount: total,
+        taxAmount: gst,
+        shippingAmount: shipping,
+        paymentMethod: paymentMethod === 'cod' ? 'COD' : 'RAZORPAY',
+        shippingAddress: {
           name: `${firstName} ${lastName}`,
           line1: addressSearch,
           city,
@@ -251,64 +264,14 @@ export default function CheckoutContent() {
           lat: coordinates.lat,
           lng: coordinates.lng,
           formatted: addressFormatted
-        })
-        .select()
-        .single();
+        }
+      };
 
-      if (addressError && user) throw addressError;
+      // 1. Submit order and shipping details to Hono REST API in a single transaction
+      const res = await api.placeOrder(orderPayload);
+      const orderId = res.orderId;
 
-      const addressId = addressData?.id || null;
-
-      // 2. Save Order in Supabase
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user?.id || '00000000-0000-0000-0000-000000000000',
-          status: 'received',
-          subtotal,
-          shipping,
-          gst,
-          total,
-          payment_method: paymentMethod,
-          address_id: addressId
-        })
-        .select()
-        .single();
-
-      if (orderError && user) throw orderError;
-
-      const orderId = orderData?.id || 'mock-order-id';
-
-      // 3. Save Order Items
-      const orderItemsToInsert = cartItems.map(item => ({
-        order_id: orderId,
-        product_name: item.productName,
-        options_json: { corners: item.corners, finish: item.finish, speed: item.speed },
-        qty: item.qty,
-        unit_price: item.unitPrice,
-        file_url: item.thumbnail
-      }));
-
-      if (user) {
-        const { error: itemsError } = await supabase
-          .from('order_items')
-          .insert(orderItemsToInsert);
-        if (itemsError) throw itemsError;
-      }
-
-      // 4. Save Payment records
-      const { error: paymentError } = await supabase
-        .from('payments')
-        .insert({
-          order_id: orderId,
-          method: paymentMethod,
-          status: paymentMethod === 'cod' ? 'pending' : 'success',
-          amount: total
-        });
-
-      if (paymentError && user) throw paymentError;
-
-      // 5. Payment flow processing
+      // 2. Payment flow processing
       if (paymentMethod === 'cod') {
         confetti({ particleCount: 150, spread: 80 });
         localStorage.removeItem('infistyle_cart');
@@ -328,18 +291,7 @@ export default function CheckoutContent() {
           name: 'Infistyle India',
           description: 'Print Order Checkout',
           handler: async function (response: any) {
-            // Confirm transaction success in Database
-            if (user) {
-              await supabase.from('payments').insert({
-                order_id: orderId,
-                method: 'razorpay',
-                status: 'success',
-                amount: total,
-                rayorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id
-              });
-            }
-            
+            // Confirm transaction success (updates DynamoDB status on Hono)
             confetti({ particleCount: 150, spread: 80 });
             localStorage.removeItem('infistyle_cart');
             window.dispatchEvent(new Event('storage'));

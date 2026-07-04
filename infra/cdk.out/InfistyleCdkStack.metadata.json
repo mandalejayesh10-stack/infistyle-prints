@@ -1,0 +1,333 @@
+{
+  "/InfistyleCdkStack": [
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "<anonymous> (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\bin\\infra.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/InfistyleSingleTable": [
+    {
+      "type": "aws:cdk:hasPhysicalName",
+      "data": {
+        "Ref": "InfistyleSingleTable444E16C4"
+      }
+    }
+  ],
+  "/InfistyleCdkStack/DynamoDBTableName": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "DynamoDBTableName"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new InfistyleCdkStack (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\lib\\cdk-stack.ts:158:5)",
+        "<anonymous> (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\bin\\infra.ts:8:1)",
+        "...node internals, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/UserPoolId": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "UserPoolId"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new InfistyleCdkStack (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\lib\\cdk-stack.ts:159:5)",
+        "<anonymous> (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\bin\\infra.ts:8:1)",
+        "...node internals, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/UserPoolClientId": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "UserPoolClientId"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new InfistyleCdkStack (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\lib\\cdk-stack.ts:160:5)",
+        "<anonymous> (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\bin\\infra.ts:8:1)",
+        "...node internals, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/PublicAssetsBucketName": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "PublicAssetsBucketName"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new InfistyleCdkStack (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\lib\\cdk-stack.ts:161:5)",
+        "<anonymous> (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\bin\\infra.ts:8:1)",
+        "...node internals, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/UserUploadsBucketName": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "UserUploadsBucketName"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new InfistyleCdkStack (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\lib\\cdk-stack.ts:162:5)",
+        "<anonymous> (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\bin\\infra.ts:8:1)",
+        "...node internals, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/HonoBackendUrl": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "HonoBackendUrl"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new InfistyleCdkStack (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\lib\\cdk-stack.ts:163:5)",
+        "<anonymous> (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\bin\\infra.ts:8:1)",
+        "...node internals, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/BootstrapVersion": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "BootstrapVersion"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...aws-cdk-lib...",
+        "(no user code in 10 frames, use --stack-trace-limit to capture more)"
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/CheckBootstrapVersion": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CheckBootstrapVersion"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...aws-cdk-lib...",
+        "(no user code in 10 frames, use --stack-trace-limit to capture more)"
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/InfistyleSingleTable/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "InfistyleSingleTable444E16C4"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Table2 in aws-cdk-lib...",
+        "new InfistyleCdkStack (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\lib\\cdk-stack.ts:15:25)",
+        "<anonymous> (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\bin\\infra.ts:8:1)",
+        "...node internals, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/InfistyleUserPool/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "InfistyleUserPoolC4612F2B"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new UserPool2 in aws-cdk-lib...",
+        "new InfistyleCdkStack (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\lib\\cdk-stack.ts:34:22)",
+        "<anonymous> (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\bin\\infra.ts:8:1)",
+        "...node internals, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/InfistyleUserPoolClient/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "InfistyleUserPoolClient7BBE4233"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new UserPoolClient2 in aws-cdk-lib...",
+        "new InfistyleCdkStack (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\lib\\cdk-stack.ts:54:28)",
+        "<anonymous> (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\bin\\infra.ts:8:1)",
+        "...node internals, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/InfistylePublicAssetsBucket/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "InfistylePublicAssetsBucket6C5B00B7"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Bucket2 in aws-cdk-lib...",
+        "new InfistyleCdkStack (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\lib\\cdk-stack.ts:81:32)",
+        "<anonymous> (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\bin\\infra.ts:8:1)",
+        "...node internals, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/InfistyleUserUploadsBucket/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "InfistyleUserUploadsBucketD42BA82C"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Bucket2 in aws-cdk-lib...",
+        "new InfistyleCdkStack (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\lib\\cdk-stack.ts:90:31)",
+        "<anonymous> (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\bin\\infra.ts:8:1)",
+        "...node internals, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/HonoBackendLambda/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "HonoBackendLambdaC3DD240E"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Function2 in aws-cdk-lib...",
+        "new InfistyleCdkStack (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\lib\\cdk-stack.ts:125:31)",
+        "<anonymous> (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\bin\\infra.ts:8:1)",
+        "...node internals, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/HonoBackendLambda/invoke-function-url": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "HonoBackendLambdainvokefunctionurlE85A3808"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...WrappedClass.addFunctionUrl in aws-cdk-lib...",
+        "new InfistyleCdkStack (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\lib\\cdk-stack.ts:147:43)",
+        "<anonymous> (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\bin\\infra.ts:8:1)",
+        "...node internals, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/HonoBackendLambda/invoke-function": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "HonoBackendLambdainvokefunction4497814D"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...WrappedClass.addFunctionUrl in aws-cdk-lib...",
+        "new InfistyleCdkStack (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\lib\\cdk-stack.ts:147:43)",
+        "<anonymous> (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\bin\\infra.ts:8:1)",
+        "...node internals, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/CDKMetadata/Default": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CDKMetadata"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...aws-cdk-lib, node internals...",
+        "(no user code in 10 frames, use --stack-trace-limit to capture more)"
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/InfistylePublicAssetsBucket/Policy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "InfistylePublicAssetsBucketPolicy62230A06"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Bucket2 in aws-cdk-lib...",
+        "new InfistyleCdkStack (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\lib\\cdk-stack.ts:81:32)",
+        "<anonymous> (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\bin\\infra.ts:8:1)"
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/InfistyleUserUploadsBucket/Policy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "InfistyleUserUploadsBucketPolicy19DF1FC0"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Bucket2 in aws-cdk-lib...",
+        "new InfistyleCdkStack (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\lib\\cdk-stack.ts:90:31)",
+        "<anonymous> (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\bin\\infra.ts:8:1)"
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/HonoBackendLambda/ServiceRole/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "HonoBackendLambdaServiceRoleE90C7A85"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Function2 in aws-cdk-lib...",
+        "new InfistyleCdkStack (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\lib\\cdk-stack.ts:125:31)",
+        "<anonymous> (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\bin\\infra.ts:8:1)",
+        "...node internals, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/HonoBackendLambda/FunctionUrl/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "HonoBackendLambdaFunctionUrl4D5452BA"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...WrappedClass.addFunctionUrl in aws-cdk-lib...",
+        "new InfistyleCdkStack (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\lib\\cdk-stack.ts:147:43)",
+        "<anonymous> (C:\\Users\\JAYESH\\Documents\\infistyle\\infra\\bin\\infra.ts:8:1)",
+        "...node internals, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/InfistyleCdkStack/HonoBackendLambda/ServiceRole/DefaultPolicy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "HonoBackendLambdaServiceRoleDefaultPolicy18FE00DA"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...aws-cdk-lib...",
+        "(no user code in 10 frames, use --stack-trace-limit to capture more)"
+      ]
+    }
+  ]
+}

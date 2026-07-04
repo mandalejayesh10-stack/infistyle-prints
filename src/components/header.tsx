@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { cognitoClient } from '@/lib/aws/client';
 import { PRODUCT_CATALOG, Category } from '@/lib/catalog';
 import { ShoppingCart, User, Heart, Briefcase, Search, Menu, X, ChevronDown, LogOut } from 'lucide-react';
 
@@ -19,18 +19,22 @@ export default function Header() {
   const [cartCount, setCartCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const supabase = createClient();
-
   useEffect(() => {
-    // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
+    const checkCognitoUser = async () => {
+      const accessToken = localStorage.getItem('infistyle_access_token');
+      if (accessToken) {
+        try {
+          const cognitoUser = await cognitoClient.getUser(accessToken);
+          setUser({ id: cognitoUser.username, email: cognitoUser.email, user_metadata: { full_name: cognitoUser.name } } as any);
+        } catch (err) {
+          console.error('Error fetching cognito session:', err);
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+    };
+    checkCognitoUser();
 
     // Load cart count from localStorage
     const updateCartCount = () => {
@@ -52,11 +56,10 @@ export default function Header() {
     const interval = setInterval(updateCartCount, 1000); // Poll as fallback
 
     return () => {
-      subscription.unsubscribe();
       window.removeEventListener('storage', updateCartCount);
       clearInterval(interval);
     };
-  }, [supabase]);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,10 +69,10 @@ export default function Header() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    cognitoClient.signOut();
     setUser(null);
     setProfileDropdownOpen(false);
-    router.push('/');
+    window.location.href = '/';
   };
 
   // We display the major categories directly in the main nav bar

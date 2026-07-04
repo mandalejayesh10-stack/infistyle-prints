@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -7,29 +6,53 @@ export async function GET(request: Request) {
   const next = searchParams.get('next') ?? '/';
 
   if (code) {
-    const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      // In production (Vercel), handle forwarded headers properly
-      const forwardedHost = request.headers.get('x-forwarded-host');
-      const isLocalEnv = process.env.NODE_ENV === 'development';
+    try {
+      const domain = process.env.NEXT_PUBLIC_COGNITO_DOMAIN || 'infistyle';
+      const region = process.env.NEXT_PUBLIC_AWS_REGION || 'ap-south-1';
+      const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID || '';
       
-      if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${next}`);
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`);
-      } else {
-        return NextResponse.redirect(`${origin}${next}`);
+      const tokenEndpoint = `https://${domain}.auth.${region}.amazoncognito.com/oauth2/token`;
+      const redirectUri = `${origin}/auth/callback`;
+
+      const response = await fetch(tokenEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          client_id: clientId,
+          code,
+          redirect_uri: redirectUri,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error_description || data.error || 'Failed to exchange token');
       }
-    } else {
-      return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('Exchange error: ' + error.message)}`);
+
+      if (data.id_token) {
+        // Construct standard Next.js Response redirect
+        const url = new URL(next, origin);
+        const res = NextResponse.redirect(url);
+        
+        // Save the ID token in cookie for the middleware
+        res.cookies.set('infistyle_session', data.id_token, {
+          path: '/',
+          maxAge: data.expires_in || 3600,
+          sameSite: 'lax',
+          secure: true,
+        });
+
+        return res;
+      }
+    } catch (err: any) {
+      return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('Auth callback failed: ' + err.message)}`);
     }
   }
 
-  // Extract Google or Supabase provider error parameter if code is missing
-  const errorCode = searchParams.get('error');
-  const errorDescription = searchParams.get('error_description');
-  const finalError = errorDescription || errorCode || 'No authorization code returned from provider';
-
-  return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(finalError)}`);
+  const oauthError = searchParams.get('error_description') || searchParams.get('error') || 'No auth code returned';
+  return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(oauthError)}`);
 }

@@ -5,7 +5,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { api } from '@/lib/aws/api';
+import { cognitoClient } from '@/lib/aws/client';
 import { PRODUCT_CATALOG } from '@/lib/catalog';
 import { 
   BarChart3, ShoppingBag, Users, Layers, MapPin, 
@@ -44,7 +45,7 @@ const MOCK_ADMIN_ORDERS: AdminOrder[] = [
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const supabase = createClient();
+
 
   const [orders, setOrders] = useState<AdminOrder[]>(MOCK_ADMIN_ORDERS);
   const [productsList, setProductsList] = useState<ManageProduct[]>([]);
@@ -87,180 +88,90 @@ export default function AdminDashboard() {
     const checkAdmin = async () => {
       setLoading(true);
       
-      const hasSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && 
-                          process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://placeholder-url.supabase.co';
-
-      if (!hasSupabase) {
-        setOrders(MOCK_ADMIN_ORDERS);
-        setSelectedOrder(MOCK_ADMIN_ORDERS[0]);
-        // Set mock static catalog products
-        const flatList: ManageProduct[] = [];
-        PRODUCT_CATALOG.forEach(cat => {
-          cat.items.forEach(item => {
-            flatList.push({
-              id: item.slug,
-              name: item.name,
-              slug: item.slug,
-              category: cat.name,
-              base_price: item.price,
-              features: item.features,
-              images: [cat.image]
-            });
-          });
-        });
-
-        // Merge localStorage products into mock catalog
-        try {
-          const localProdsJson = localStorage.getItem('infistyle_custom_products');
-          if (localProdsJson) {
-            const localProds = JSON.parse(localProdsJson);
-            localProds.forEach((lp: any) => {
-              const existingIdx = flatList.findIndex(p => p.slug === lp.slug);
-              const mapped: ManageProduct = {
-                id: lp.id || lp.slug,
-                name: lp.name,
-                slug: lp.slug,
-                category: lp.category,
-                base_price: Number(lp.base_price),
-                features: lp.features || [],
-                images: lp.images || []
-              };
-              if (existingIdx > -1) {
-                flatList[existingIdx] = mapped;
-              } else {
-                flatList.unshift(mapped);
-              }
-            });
-          }
-        } catch (err) {
-          console.error('Error loading custom products from localStorage:', err);
-        }
-
-        setProductsList(flatList);
-        setLoading(false);
-        return;
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const accessToken = localStorage.getItem('infistyle_access_token');
+      if (!accessToken) {
         router.push('/login?next=/admin');
         return;
       }
 
-      // Check admin status in DB
-      const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
-      if (!profile || !profile.is_admin) {
-        router.push('/');
-        return;
-      }
-
-      // Load admin orders from database
-      const { data: ords } = await supabase
-        .from('orders')
-        .select('*, profiles(name, email), addresses(*)')
-        .order('created_at', { ascending: false });
-
-      if (ords) {
-        setOrders(ords.map(o => ({
-          id: o.id,
-          customerName: o.profiles?.name || 'Guest Customer',
-          customerEmail: o.profiles?.email || 'N/A',
-          date: new Date(o.created_at).toISOString().split('T')[0],
-          total: Number(o.total),
-          status: o.status as any,
-          paymentMethod: o.payment_method,
-          paymentStatus: o.payment_method === 'cod' ? 'pending' : 'success',
-          lat: Number(o.addresses?.lat || 20.5937),
-          lng: Number(o.addresses?.lng || 78.9629),
-          address: o.addresses?.formatted || 'No Address Logged'
-        })));
-        if (ords.length > 0) {
-          setSelectedOrder(orders[0]);
-        }
-      }
-
-      // Load products to manage
-      let allProds: ManageProduct[] = [];
       try {
-        const { data: prods } = await supabase.from('products').select('*').order('name', { ascending: true });
-        if (prods && prods.length > 0) {
-          allProds = prods.map(p => ({
-            id: p.id,
-            name: p.name,
-            slug: p.slug,
-            category: p.category,
-            base_price: Number(p.base_price),
-            features: p.features || [],
-            images: p.images || []
+        const cognitoUser = await cognitoClient.getUser(accessToken);
+        
+        // Fetch stats & orders from Hono API
+        const stats = await api.getAdminStats();
+        if (stats && stats.orders) {
+          const mappedOrders = stats.orders.map((o: any) => ({
+            id: o.orderId,
+            userId: o.PK.replace('USER#', ''),
+            customerName: o.userName || 'Guest Customer',
+            customerEmail: o.userEmail || 'N/A',
+            date: new Date(o.createdAt).toISOString().split('T')[0],
+            total: Number(o.totalAmount),
+            status: o.orderStatus.toLowerCase() as any,
+            paymentMethod: o.paymentMethod.toLowerCase(),
+            paymentStatus: o.paymentStatus.toLowerCase(),
+            lat: Number(o.shippingAddress?.lat || 20.5937),
+            lng: Number(o.shippingAddress?.lng || 78.9629),
+            address: o.shippingAddress?.formatted || 'No Address Logged'
           }));
+          setOrders(mappedOrders);
+          if (mappedOrders.length > 0) {
+            setSelectedOrder(mappedOrders[0]);
+          }
         }
-      } catch (err) {
-        console.error('Error fetching database products:', err);
-      }
 
-      // Merge localStorage custom products
-      try {
-        const localProdsJson = localStorage.getItem('infistyle_custom_products');
-        if (localProdsJson) {
-          const localProds = JSON.parse(localProdsJson);
-          localProds.forEach((lp: any) => {
-            const existingIdx = allProds.findIndex(p => p.slug === lp.slug);
-            const mapped: ManageProduct = {
-              id: lp.id || lp.slug,
-              name: lp.name,
-              slug: lp.slug,
-              category: lp.category,
-              base_price: Number(lp.base_price),
-              features: lp.features || [],
-              images: lp.images || []
-            };
-            if (existingIdx > -1) {
-              allProds[existingIdx] = mapped;
-            } else {
-              allProds.unshift(mapped);
-            }
+        // Load catalog products from Hono API
+        const res = await api.getCatalog();
+        if (res && res.categories) {
+          const flatList: ManageProduct[] = [];
+          res.categories.forEach((cat: any) => {
+            cat.items.forEach((item: any) => {
+              flatList.push({
+                id: item.slug,
+                name: item.name,
+                slug: item.slug,
+                category: cat.name,
+                base_price: item.price,
+                features: item.features || [],
+                images: [cat.image]
+              });
+            });
           });
+          setProductsList(flatList);
         }
-      } catch (err) {
-        console.error('Error loading custom products from localStorage:', err);
-      }
 
-      // Load custom templates
-      try {
+        // Load custom templates
         const localTplsJson = localStorage.getItem('infistyle_custom_templates');
         if (localTplsJson) {
           setTemplatesList(JSON.parse(localTplsJson));
         } else {
           setTemplatesList([]);
         }
-      } catch (err) {
-        console.error('Error loading custom templates:', err);
-      }
 
-      setProductsList(allProds);
+      } catch (err) {
+        console.error('Error fetching admin dashboard details:', err);
+        router.push('/');
+      }
       setLoading(false);
     };
 
     checkAdmin();
-  }, [supabase, router]);
+  }, [router]);
 
   // Update order status in Supabase
   const handleUpdateStatus = async (orderId: string, newStatus: AdminOrder['status']) => {
     try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ status: newStatus })
-        .eq('id', orderId);
+      const order = orders.find(o => o.id === orderId) as any;
+      if (!order) return;
 
-      if (error) throw error;
+      await api.updateOrderStatus(order.userId, orderId, newStatus.toUpperCase());
 
       setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
       setToast('Order status updated successfully.');
       setTimeout(() => setToast(''), 3000);
     } catch (err) {
       console.error(err);
-      setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-      setToast('Mock update: order status updated.');
+      setToast('Failed to update status.');
       setTimeout(() => setToast(''), 3000);
     }
   };
@@ -375,28 +286,13 @@ export default function AdminDashboard() {
 
     try {
       if (isEditMode && activeProductId) {
-        // Update in Supabase
-        const { error } = await supabase
-          .from('products')
-          .update(payload)
-          .eq('id', activeProductId);
-
-        if (error) throw error;
+        await api.updateProductPrice(payload.slug, updatedPrice);
 
         setProductsList(productsList.map(p => p.id === activeProductId ? { ...p, ...payload, base_price: updatedPrice } : p));
         setToast('Product details updated successfully.');
       } else {
-        // Insert in Supabase
-        const { data, error } = await supabase
-          .from('products')
-          .insert(payload)
-          .select()
-          .single();
-
-        if (error) throw error;
-
         setProductsList([...productsList, {
-          id: data?.id || payload.slug,
+          id: payload.slug,
           ...payload,
           base_price: updatedPrice
         }]);
@@ -406,19 +302,7 @@ export default function AdminDashboard() {
       setTimeout(() => setToast(''), 3000);
     } catch (err) {
       console.error(err);
-      // Fallback local mock states updates
-      if (isEditMode && activeProductId) {
-        setProductsList(productsList.map(p => p.id === activeProductId ? { ...p, ...payload, base_price: updatedPrice } : p));
-        setToast('Mock update: product details saved.');
-      } else {
-        setProductsList([...productsList, {
-          id: payload.slug,
-          ...payload,
-          base_price: updatedPrice
-        }]);
-        setToast('Mock insert: new product added.');
-      }
-      setShowProductForm(false);
+      setToast('Failed to update pricing.');
       setTimeout(() => setToast(''), 3000);
     }
   };
@@ -441,19 +325,8 @@ export default function AdminDashboard() {
       console.error('Error deleting product from local cache:', err);
     }
 
-    // 2. Delete from Supabase
-    try {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', prodId);
-
-      if (error) throw error;
-      setToast('Product deleted from database.');
-    } catch (err) {
-      console.error('Error deleting product from Supabase:', err);
-      setToast('Product reverted to catalog default.');
-    }
+    // 2. Revert dynamic status locally
+    setToast('Product updated in local view.');
 
     // 3. Update UI state: revert static catalog item or remove custom item
     const staticItem = PRODUCT_CATALOG.flatMap(c => c.items.map(item => ({ item, catName: c.name }))).find(x => x.item.slug === slug);
@@ -547,20 +420,7 @@ export default function AdminDashboard() {
       localStorage.setItem('infistyle_custom_templates', JSON.stringify(localTpls));
       setTemplatesList(localTpls);
 
-      // Try Supabase Fallback (fails silently if table doesn't exist)
-      const hasSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && 
-                          process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://placeholder-url.supabase.co';
-      if (hasSupabase) {
-        try {
-          if (templateEditMode && activeTemplateId) {
-            await supabase.from('templates').update(payload).eq('id', activeTemplateId);
-          } else {
-            await supabase.from('templates').insert(payload);
-          }
-        } catch (dbErr) {
-          console.warn('Supabase templates sync skipped:', dbErr);
-        }
-      }
+      // Local templates storage sync completed successfully
 
       setToast(templateEditMode ? 'Template updated successfully.' : 'New template added.');
       handleResetTemplateForm();
@@ -584,16 +444,7 @@ export default function AdminDashboard() {
         setTemplatesList(filtered);
       }
 
-      // Try Supabase Fallback (fails silently if table doesn't exist)
-      const hasSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && 
-                          process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://placeholder-url.supabase.co';
-      if (hasSupabase) {
-        try {
-          await supabase.from('templates').delete().eq('id', tplId);
-        } catch (dbErr) {
-          console.warn('Supabase templates delete skipped:', dbErr);
-        }
-      }
+      // Local templates delete completed successfully
 
       setToast('Template deleted.');
       setTimeout(() => setToast(''), 3000);

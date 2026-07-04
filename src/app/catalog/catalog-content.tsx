@@ -4,13 +4,13 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PRODUCT_CATALOG, Category, SubProduct } from '@/lib/catalog';
-import { createClient } from '@/lib/supabase/client';
+import { api } from '@/lib/aws/api';
 import { Search, SlidersHorizontal, Eye, Tag, AlertCircle } from 'lucide-react';
 
 export default function CatalogContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const supabase = createClient();
+
 
   const initialSearch = searchParams?.get('search') || '';
   const initialCategory = searchParams?.get('category') || 'All';
@@ -32,23 +32,26 @@ export default function CatalogContent() {
     const fetchProducts = async () => {
       setLoading(true);
       let supabaseProds: any[] = [];
-      
-      const hasSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && 
-                          process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://placeholder-url.supabase.co';
-
-      if (hasSupabase) {
-        try {
-          const { data, error } = await supabase
-            .from('products')
-            .select('*')
-            .order('name', { ascending: true });
-
-          if (!error && data) {
-            supabaseProds = data;
-          }
-        } catch (err) {
-          console.error('Error fetching from Supabase:', err);
+      try {
+        const res = await api.getCatalog();
+        if (res && res.categories) {
+          const prods: any[] = [];
+          res.categories.forEach((cat: any) => {
+            cat.items.forEach((item: any) => {
+              prods.push({
+                name: item.name,
+                slug: item.slug,
+                base_price: item.price,
+                features: item.features,
+                category: cat.name,
+                images: [cat.image],
+              });
+            });
+          });
+          supabaseProds = prods;
         }
+      } catch (err) {
+        console.error('Error fetching from Hono API:', err);
       }
 
       // Merge localStorage custom products
@@ -77,7 +80,7 @@ export default function CatalogContent() {
     };
 
     fetchProducts();
-  }, [supabase]);
+  }, []);
 
   // Merge static catalog items and dynamic items into a flat list for searching/filtering
   const getCatalogItems = (): { name: string; slug: string; price: number; features: string[]; category: string; image: string }[] => {
@@ -222,7 +225,7 @@ export default function CatalogContent() {
             {/* database connection indicator */}
             <div className="border-t border-yellow-100 pt-4 mt-6 flex items-center gap-2 text-xs text-gray-400 font-semibold">
               <AlertCircle className="h-4 w-4 text-green-500" />
-              <span>{dbProducts.length > 0 ? 'Loaded from Supabase DB' : 'Using Local Static Catalog'}</span>
+              <span>{dbProducts.length > 0 ? 'Loaded from AWS DynamoDB' : 'Using Local Static Catalog'}</span>
             </div>
           </div>
         </div>
