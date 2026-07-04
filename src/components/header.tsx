@@ -135,21 +135,56 @@ export default function Header() {
                   <ChevronDown className="h-4 w-4" />
                 </button>
                 {profileDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white border-2 border-primary rounded-xl shadow-lg py-2 z-50">
-                    <Link
-                      href="/dashboard"
-                      onClick={() => setProfileDropdownOpen(false)}
-                      className="block px-4 py-2 text-sm hover:bg-yellow-50 text-dark-charcoal font-semibold"
-                    >
-                      Dashboard
-                    </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm hover:bg-yellow-50 text-red-600 font-semibold"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Logout
-                    </button>
+                  <div className="absolute right-0 mt-2 w-56 bg-white border-2 border-primary shadow-xl rounded-none z-50">
+                    {/* User Info Header */}
+                    <div className="px-4 py-3 bg-yellow-50 border-b border-primary/20">
+                      <p className="text-[10px] text-gray-500 font-black uppercase tracking-wider">Signed in as</p>
+                      <p className="text-xs font-black text-dark-charcoal truncate mt-0.5" title={user.email}>
+                        {user.email}
+                      </p>
+                    </div>
+
+                    {/* Navigation Links */}
+                    <div className="py-1">
+                      <Link
+                        href="/dashboard?tab=overview"
+                        onClick={() => setProfileDropdownOpen(false)}
+                        className="block px-4 py-2 text-xs text-dark-charcoal hover:bg-yellow-50 font-black uppercase tracking-wider"
+                      >
+                        Dashboard
+                      </Link>
+                      <Link
+                        href="/dashboard?tab=projects"
+                        onClick={() => setProfileDropdownOpen(false)}
+                        className="block px-4 py-2 text-xs text-dark-charcoal hover:bg-yellow-50 font-black uppercase tracking-wider"
+                      >
+                        My Projects
+                      </Link>
+                      <Link
+                        href="/dashboard?tab=orders"
+                        onClick={() => setProfileDropdownOpen(false)}
+                        className="block px-4 py-2 text-xs text-dark-charcoal hover:bg-yellow-50 font-black uppercase tracking-wider"
+                      >
+                        Order History & Reorder
+                      </Link>
+                      <Link
+                        href="/dashboard?tab=addresses"
+                        onClick={() => setProfileDropdownOpen(false)}
+                        className="block px-4 py-2 text-xs text-dark-charcoal hover:bg-yellow-50 font-black uppercase tracking-wider"
+                      >
+                        Account Settings
+                      </Link>
+                    </div>
+
+                    {/* Centered outlined Sign Out button */}
+                    <div className="p-3 border-t border-primary/20 bg-gray-50 flex justify-center">
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-center py-2 border-2 border-dark-charcoal text-dark-charcoal hover:bg-primary hover:border-primary text-xs font-black uppercase tracking-widest transition-all rounded-none cursor-pointer"
+                      >
+                        Sign out
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

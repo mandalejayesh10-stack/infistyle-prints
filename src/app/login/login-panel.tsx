@@ -3,7 +3,7 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useState } from 'react';
-import { Sparkles, Mail, Lock, Shield, User, Key } from 'lucide-react';
+import { Sparkles, Mail, Lock, User } from 'lucide-react';
 
 type TabType = 'google' | 'email';
 type ModeType = 'login' | 'signup';
@@ -86,64 +86,7 @@ export default function LoginPanel() {
     }
   };
 
-  const handleQuickLogin = async (role: 'admin' | 'customer') => {
-    setLoading(true);
-    setMessage(null);
-    setActiveTab('email');
-    setAuthMode('login');
 
-    const demoEmail = role === 'admin' ? 'admin@infistyle.com' : 'customer@infistyle.com';
-    const demoPassword = role === 'admin' ? 'AdminPassword123' : 'CustomerPassword123';
-
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-
-    // 1. Attempt login
-    const { error: loginError } = await supabase.auth.signInWithPassword({
-      email: demoEmail,
-      password: demoPassword,
-    });
-
-    if (loginError) {
-      // 2. If user doesn't exist, automatically sign them up for convenience
-      if (loginError.message.includes('Invalid login credentials')) {
-        setMessage({ type: 'success', text: `Creating demo ${role} account... Please wait.` });
-        
-        const { error: signUpError } = await supabase.auth.signUp({
-          email: demoEmail,
-          password: demoPassword,
-          options: {
-            data: {
-              name: role === 'admin' ? 'InfiStyle Admin' : 'InfiStyle Customer',
-            },
-          },
-        });
-
-        if (signUpError) {
-          setMessage({ type: 'error', text: signUpError.message });
-          setLoading(false);
-        } else {
-          // Retry login immediately
-          const { error: retryError } = await supabase.auth.signInWithPassword({
-            email: demoEmail,
-            password: demoPassword,
-          });
-
-          if (retryError) {
-            setMessage({ type: 'error', text: retryError.message });
-            setLoading(false);
-          } else {
-            window.location.href = next;
-          }
-        }
-      } else {
-        setMessage({ type: 'error', text: loginError.message });
-        setLoading(false);
-      }
-    } else {
-      window.location.href = next;
-    }
-  };
 
   return (
     <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -312,45 +255,7 @@ export default function LoginPanel() {
             </form>
           )}
 
-          {/* Quick Demo Accounts Panel */}
-          <div className="mt-8 pt-6 border-t-2 border-primary/20 bg-yellow-50/30 p-4 border border-dashed border-primary">
-            <h4 className="flex items-center gap-1.5 text-xs font-black uppercase text-dark-charcoal mb-3">
-              <Key className="h-4 w-4 text-primary" />
-              <span>Developer Demo Accounts</span>
-            </h4>
-            
-            <p className="text-[10px] text-gray-500 font-bold mb-4 leading-relaxed">
-              Click below to quickly sign in as different roles. The accounts will be registered in Supabase if they do not exist.
-            </p>
 
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('customer')}
-                className="flex items-center justify-center gap-1 py-2 px-3 border border-dark-charcoal bg-white text-dark-charcoal text-[11px] font-bold hover:bg-neutral-100 transition-all cursor-pointer shadow-sm"
-              >
-                <User className="h-3.5 w-3.5" />
-                <span>Customer Login</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('admin')}
-                className="flex items-center justify-center gap-1 py-2 px-3 border border-primary bg-primary text-dark-charcoal text-[11px] font-extrabold hover:bg-white hover:border-primary transition-all cursor-pointer shadow-sm"
-              >
-                <Shield className="h-3.5 w-3.5" />
-                <span>Admin Login</span>
-              </button>
-            </div>
-
-            {email === 'admin@infistyle.com' && (
-              <div className="mt-3 p-2 bg-yellow-100/50 border border-primary text-[10px] text-dark-charcoal font-bold leading-normal">
-                ⚠️ **Note**: To grant admin credentials, run this command in your Supabase SQL Editor:
-                <code className="block mt-1 bg-white p-1 text-[9px] border border-primary overflow-x-auto whitespace-pre font-mono">
-                  UPDATE profiles SET is_admin = true WHERE email = &apos;admin@infistyle.com&apos;;
-                </code>
-              </div>
-            )}
-          </div>
 
           <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-400 font-medium">
             <span>Secure Supabase Login</span>

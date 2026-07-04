@@ -21,9 +21,15 @@ export async function GET(request: Request) {
       } else {
         return NextResponse.redirect(`${origin}${next}`);
       }
+    } else {
+      return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('Exchange error: ' + error.message)}`);
     }
   }
 
-  // Redirect to a fallback login error page
-  return NextResponse.redirect(`${origin}/login?error=Authentication%20failed`);
+  // Extract Google or Supabase provider error parameter if code is missing
+  const errorCode = searchParams.get('error');
+  const errorDescription = searchParams.get('error_description');
+  const finalError = errorDescription || errorCode || 'No authorization code returned from provider';
+
+  return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(finalError)}`);
 }
