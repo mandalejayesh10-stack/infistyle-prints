@@ -1,0 +1,53 @@
+name: AWS Serverless CDK Deployment
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'infra/**'
+      - '.github/workflows/deploy-aws.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout Code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-node: '22'
+          cache: 'npm'
+
+      # 3. Build Hono Backend API
+      - name: Install and Build Hono Backend
+        run: |
+          cd backend
+          npm ci
+          npm run build
+
+      # 4. Install Infrastructure Dependencies
+      - name: Install Infra Dependencies
+        run: |
+          cd infra
+          npm ci
+
+      # 5. Configure AWS Credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1 # Mumbai Region
+
+      # 6. Deploy AWS Stack
+      - name: Deploy CDK Stack
+        run: |
+          cd infra
+          npx cdk deploy --require-approval never
