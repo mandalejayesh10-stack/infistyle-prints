@@ -60,8 +60,7 @@ export default function LoginPanel() {
         setMessage({ type: 'error', text: error.message });
         setLoading(false);
       } else {
-        router.push(next);
-        router.refresh();
+        window.location.href = next;
       }
     } else {
       const { error, data } = await supabase.auth.signUp({
@@ -134,8 +133,7 @@ export default function LoginPanel() {
             setMessage({ type: 'error', text: retryError.message });
             setLoading(false);
           } else {
-            router.push(next);
-            router.refresh();
+            window.location.href = next;
           }
         }
       } else {
@@ -143,8 +141,7 @@ export default function LoginPanel() {
         setLoading(false);
       }
     } else {
-      router.push(next);
-      router.refresh();
+      window.location.href = next;
     }
   };
 
