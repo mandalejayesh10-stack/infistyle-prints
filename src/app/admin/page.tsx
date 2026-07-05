@@ -104,10 +104,11 @@ export default function AdminDashboard() {
         }
 
         // Fetch stats & orders from Hono API with fallback
+        let apiOrders: AdminOrder[] = [];
         try {
           const stats = await api.getAdminStats();
           if (stats && stats.orders) {
-            const mappedOrders = stats.orders.map((o: any) => ({
+            apiOrders = stats.orders.map((o: any) => ({
               id: o.orderId,
               userId: o.PK.replace('USER#', ''),
               customerName: o.userName || 'Guest Customer',
@@ -121,14 +122,42 @@ export default function AdminDashboard() {
               lng: Number(o.shippingAddress?.lng || 78.9629),
               address: o.shippingAddress?.formatted || 'No Address Logged'
             }));
-            setOrders(mappedOrders);
-            if (mappedOrders.length > 0) {
-              setSelectedOrder(mappedOrders[0]);
-            }
           }
         } catch (err) {
-          console.warn('Failed to load live admin stats, falling back to mock data:', err);
-          // Set mock orders for testing
+          console.warn('Failed to load live admin stats, falling back to local fallback:', err);
+        }
+
+        // Merge with local fallback orders
+        let localOrders: AdminOrder[] = [];
+        try {
+          const localOrdersJson = localStorage.getItem('infistyle_orders');
+          if (localOrdersJson) {
+            const parsedLocal = JSON.parse(localOrdersJson);
+            localOrders = parsedLocal.map((o: any) => ({
+              id: o.orderId,
+              userId: o.userId || 'GUEST-LOCAL',
+              customerName: o.shippingAddress?.name || `${o.shippingAddress?.firstName || ''} ${o.shippingAddress?.lastName || ''}`.trim() || 'Local Customer',
+              customerEmail: o.shippingAddress?.email || 'local@example.com',
+              date: new Date(o.createdAt || Date.now()).toISOString().split('T')[0],
+              total: Number(o.total || 0),
+              status: (o.orderStatus || 'pending').toLowerCase() as any,
+              paymentMethod: (o.paymentMethod || 'cod').toLowerCase(),
+              paymentStatus: 'pending',
+              lat: Number(o.shippingAddress?.lat || 20.5937),
+              lng: Number(o.shippingAddress?.lng || 78.9629),
+              address: o.shippingAddress?.formatted || 'No Address Logged'
+            }));
+          }
+        } catch (localErr) {
+          console.error('Failed to parse local fallback orders for admin:', localErr);
+        }
+
+        const combined = [...apiOrders, ...localOrders];
+        if (combined.length > 0) {
+          setOrders(combined);
+          setSelectedOrder(combined[0]);
+        } else {
+          // Set mock orders for testing if empty
           const mockOrders = [
             {
               id: 'ord_mock101',

@@ -88,31 +88,76 @@ export default function DashboardContent() {
           })));
         }
 
-        // 2. Fetch user orders from Hono REST API
-        const ordersRes = await api.getOrders();
-        if (ordersRes && ordersRes.orders) {
-          setOrders(ordersRes.orders.map((o: any) => ({
-            id: o.orderId,
-            date: new Date(o.createdAt).toLocaleDateString(),
-            productName: o.items?.[0]?.productName || 'Custom Print Bundle',
-            qty: o.items?.[0]?.qty || 100,
-            total: Number(o.totalAmount),
-            status: o.orderStatus.toLowerCase() as any,
-            paymentMethod: o.paymentMethod.toLowerCase(),
-            thumbnail: o.items?.[0]?.thumbnail || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=150&q=80',
-            address: o.shippingAddress
-          })));
+        // 2. Fetch user orders from Hono REST API & Merge Local Storage fallback
+        let apiOrders: Order[] = [];
+        let extractedAddresses: any[] = [];
 
-          // Extract addresses from orders history
-          const addrs = ordersRes.orders.map((o: any) => o.shippingAddress).filter(Boolean);
-          setAddresses(addrs.map((a: any, index: number) => ({
+        try {
+          const ordersRes = await api.getOrders();
+          if (ordersRes && ordersRes.orders) {
+            apiOrders = ordersRes.orders.map((o: any) => ({
+              id: o.orderId,
+              date: new Date(o.createdAt).toLocaleDateString(),
+              productName: o.items?.[0]?.productName || 'Custom Print Bundle',
+              qty: o.items?.[0]?.qty || 100,
+              total: Number(o.totalAmount),
+              status: o.orderStatus.toLowerCase() as any,
+              paymentMethod: o.paymentMethod.toLowerCase(),
+              thumbnail: o.items?.[0]?.thumbnail || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=150&q=80',
+              address: o.shippingAddress
+            }));
+            extractedAddresses = ordersRes.orders.map((o: any) => o.shippingAddress).filter(Boolean);
+          }
+        } catch (err) {
+          console.warn('Failed to load orders from live database, loading local fallback:', err);
+        }
+
+        // Merge with local fallback orders
+        let localOrders: Order[] = [];
+        try {
+          const localOrdersJson = localStorage.getItem('infistyle_orders');
+          if (localOrdersJson) {
+            const parsedLocal = JSON.parse(localOrdersJson);
+            localOrders = parsedLocal.map((o: any) => ({
+              id: o.orderId,
+              date: new Date(o.createdAt || Date.now()).toLocaleDateString(),
+              productName: o.items?.[0]?.productName || 'Custom Print Bundle',
+              qty: o.items?.[0]?.qty || 100,
+              total: Number(o.total || 0),
+              status: (o.orderStatus || 'pending').toLowerCase() as any,
+              paymentMethod: (o.paymentMethod || 'cod').toLowerCase(),
+              thumbnail: o.items?.[0]?.thumbnail || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=150&q=80',
+              address: o.shippingAddress
+            }));
+            
+            const localAddrs = parsedLocal.map((o: any) => o.shippingAddress).filter(Boolean);
+            extractedAddresses = [...extractedAddresses, ...localAddrs];
+          }
+        } catch (localErr) {
+          console.error('Failed to parse local fallback orders:', localErr);
+        }
+
+        const combinedOrders = [...apiOrders, ...localOrders];
+        setOrders(combinedOrders);
+
+        // Map combined addresses
+        if (extractedAddresses.length > 0) {
+          const uniqueAddrsMap = new Map();
+          extractedAddresses.forEach((a: any) => {
+            if (a && a.line1) {
+              uniqueAddrsMap.set(`${a.line1}_${a.pincode}`, a);
+            }
+          });
+          const uniqueAddrs = Array.from(uniqueAddrsMap.values());
+
+          setAddresses(uniqueAddrs.map((a: any, index: number) => ({
             id: `addr_${index}`,
-            name: a.name,
+            name: a.name || `${a.firstName || ''} ${a.lastName || ''}`.trim() || 'Saved Destination',
             line1: a.line1,
             city: a.city,
             state: a.state,
             pincode: a.pincode,
-            formatted: a.formatted
+            formatted: a.formatted || `${a.line1}, ${a.city}, ${a.state} - ${a.pincode}`
           })));
         }
       } catch (err) {
