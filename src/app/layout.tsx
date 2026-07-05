@@ -3,9 +3,17 @@ import "./globals.css";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 
+import type { Viewport } from "next";
+
 export const metadata: Metadata = {
   title: "Infistyle India | Premium Custom Online Printing",
   description: "Online Printing E-Commerce Platform - Design and order custom business cards, letterheads, apparel, mugs, pens and more.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({
