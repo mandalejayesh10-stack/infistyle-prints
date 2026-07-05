@@ -109,7 +109,7 @@ export default function Header() {
           </form>
 
           {/* Utility Navigation Links */}
-          <div className="hidden md:flex items-center gap-6 text-sm font-semibold text-dark-charcoal">
+          <div className="hidden md:flex items-center gap-4 lg:gap-6 text-sm font-semibold text-dark-charcoal flex-shrink-0">
             {user ? (
               <Link href="/dashboard?tab=projects" className="flex items-center gap-1.5 hover:text-primary transition-colors">
                 <Briefcase className="h-4.5 w-4.5" />
@@ -230,13 +230,13 @@ export default function Header() {
       </div>
 
       {/* Categories Navigation Bar (with Mega Menu) */}
-      <nav className="bg-yellow-50 border-t border-primary hidden md:block">
+      <nav className="bg-yellow-50 border-t border-primary overflow-x-auto scrollbar-none">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center gap-8 h-12 relative">
+          <div className="flex items-center justify-start md:justify-center gap-6 md:gap-8 h-12 relative whitespace-nowrap min-w-max">
             {mainCategories.map((category) => (
               <div
                 key={category.slug}
-                className="h-full flex items-center"
+                className="h-full flex items-center flex-shrink-0"
                 onMouseEnter={() => setActiveCategory(category.slug)}
                 onMouseLeave={() => setActiveCategory(null)}
               >
