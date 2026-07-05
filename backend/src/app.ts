@@ -236,7 +236,78 @@ app.put('/admin/orders/:userId/:orderId/status', authMiddleware, adminMiddleware
 });
 
 // ----------------------------------------------------
-// 5. SEEDING ROUTE (FOR QUICK DATABASE SETUP ON AWS)
+// 5. PUBLIC DESIGN TEMPLATES ENDPOINTS
+// ----------------------------------------------------
+
+// Save or Update design template (Admin only)
+app.post('/templates', authMiddleware, adminMiddleware, async (c) => {
+  try {
+    const body = await c.req.json();
+    const templateId = body.id || `template_${Date.now()}`;
+    const productSlug = body.productSlug;
+
+    if (!productSlug) {
+      return c.json({ error: 'Product slug is required' }, 400);
+    }
+
+    const templateItem = {
+      PK: `PRODUCT#${productSlug}`,
+      SK: `TEMPLATE#${templateId}`,
+      id: templateId,
+      name: body.name || 'Untitled Template',
+      productSlug,
+      color: body.color || 'White',
+      orientation: body.orientation || 'Horizontal',
+      industry: body.industry || 'Corporate',
+      theme: body.theme || 'Minimal',
+      canvasJson: body.canvasJson,
+      thumbnail: body.thumbnail,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    await db.put(templateItem);
+    return c.json({ success: true, id: templateId });
+  } catch (err: any) {
+    return c.json({ error: 'Failed to save template: ' + err.message }, 500);
+  }
+});
+
+// Get all templates across all products (Admin only)
+app.get('/templates', authMiddleware, adminMiddleware, async (c) => {
+  try {
+    const allItems = await db.scan();
+    const templates = allItems.filter(item => item.PK.startsWith('PRODUCT#') && item.SK.startsWith('TEMPLATE#'));
+    return c.json({ templates });
+  } catch (err: any) {
+    return c.json({ error: 'Failed to fetch templates: ' + err.message }, 500);
+  }
+});
+
+// Get templates by product slug
+app.get('/templates/:productSlug', async (c) => {
+  try {
+    const { productSlug } = c.req.param();
+    const templates = await db.query(`PRODUCT#${productSlug}`, 'TEMPLATE#');
+    return c.json({ templates });
+  } catch (err: any) {
+    return c.json({ error: 'Failed to fetch templates: ' + err.message }, 500);
+  }
+});
+
+// Delete template (Admin only)
+app.delete('/templates/:productSlug/:templateId', authMiddleware, adminMiddleware, async (c) => {
+  try {
+    const { productSlug, templateId } = c.req.param();
+    await db.delete(`PRODUCT#${productSlug}`, `TEMPLATE#${templateId}`);
+    return c.json({ success: true });
+  } catch (err: any) {
+    return c.json({ error: 'Failed to delete template: ' + err.message }, 500);
+  }
+});
+
+// ----------------------------------------------------
+// 6. SEEDING ROUTE (FOR QUICK DATABASE SETUP ON AWS)
 // ----------------------------------------------------
 app.post('/seed', async (c) => {
   try {

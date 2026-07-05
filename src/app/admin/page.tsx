@@ -141,12 +141,21 @@ export default function AdminDashboard() {
         }
 
         // Load custom templates
-        const localTplsJson = localStorage.getItem('infistyle_custom_templates');
-        if (localTplsJson) {
-          setTemplatesList(JSON.parse(localTplsJson));
-        } else {
-          setTemplatesList([]);
+        let templates = [];
+        try {
+          const res = await api.getAllTemplates();
+          if (res && res.templates) {
+            templates = res.templates;
+          }
+        } catch (err) {
+          console.error('Failed to load templates from database:', err);
+          // Fallback to local storage
+          const localTplsJson = localStorage.getItem('infistyle_custom_templates');
+          if (localTplsJson) {
+            templates = JSON.parse(localTplsJson);
+          }
         }
+        setTemplatesList(templates);
 
       } catch (err) {
         console.error('Error fetching admin dashboard details:', err);
@@ -405,6 +414,10 @@ export default function AdminDashboard() {
     };
 
     try {
+      // 1. Save to DynamoDB database via Hono API
+      await api.savePublicTemplate(payload);
+
+      // 2. Fallback local storage sync
       const localTplsJson = localStorage.getItem('infistyle_custom_templates');
       let localTpls = localTplsJson ? JSON.parse(localTplsJson) : [];
 
@@ -418,9 +431,18 @@ export default function AdminDashboard() {
       }
 
       localStorage.setItem('infistyle_custom_templates', JSON.stringify(localTpls));
-      setTemplatesList(localTpls);
 
-      // Local templates storage sync completed successfully
+      // Reload templates from database
+      try {
+        const allRes = await api.getAllTemplates();
+        if (allRes && allRes.templates) {
+          setTemplatesList(allRes.templates);
+        } else {
+          setTemplatesList(localTpls);
+        }
+      } catch (err) {
+        setTemplatesList(localTpls);
+      }
 
       setToast(templateEditMode ? 'Template updated successfully.' : 'New template added.');
       handleResetTemplateForm();
@@ -436,15 +458,31 @@ export default function AdminDashboard() {
     if (!confirm('Are you sure you want to delete this template?')) return;
 
     try {
+      // 1. Delete from DynamoDB database
+      const templateToDelete = templatesList.find(t => t.id === tplId);
+      if (templateToDelete) {
+        await api.deletePublicTemplate(templateToDelete.productSlug, tplId);
+      }
+
+      // 2. Delete from local storage fallback
       const localTplsJson = localStorage.getItem('infistyle_custom_templates');
       if (localTplsJson) {
         const localTpls = JSON.parse(localTplsJson);
         const filtered = localTpls.filter((t: any) => t.id !== tplId);
         localStorage.setItem('infistyle_custom_templates', JSON.stringify(filtered));
-        setTemplatesList(filtered);
       }
 
-      // Local templates delete completed successfully
+      // Reload templates list from database
+      try {
+        const allRes = await api.getAllTemplates();
+        if (allRes && allRes.templates) {
+          setTemplatesList(allRes.templates);
+        } else {
+          setTemplatesList(prev => prev.filter(t => t.id !== tplId));
+        }
+      } catch (err) {
+        setTemplatesList(prev => prev.filter(t => t.id !== tplId));
+      }
 
       setToast('Template deleted.');
       setTimeout(() => setToast(''), 3000);

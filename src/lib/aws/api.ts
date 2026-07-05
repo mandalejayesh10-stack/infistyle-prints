@@ -59,4 +59,23 @@ export const api = {
     request(`/catalog/products/${slug}/price`, { method: 'PUT', body: JSON.stringify({ price }) }),
     
   seedCatalog: () => request('/seed', { method: 'POST' }),
+
+  savePublicTemplate: (template: {
+    id?: string;
+    name: string;
+    productSlug: string;
+    color: string;
+    orientation: string;
+    industry: string;
+    theme: string;
+    canvasJson: string;
+    thumbnail: string;
+  }) => request('/templates', { method: 'POST', body: JSON.stringify(template) }),
+  
+  getPublicTemplates: (productSlug: string) => request(`/templates/${productSlug}`),
+  
+  getAllTemplates: () => request('/templates'),
+  
+  deletePublicTemplate: (productSlug: string, templateId: string) => 
+    request(`/templates/${productSlug}/${templateId}`, { method: 'DELETE' }),
 };

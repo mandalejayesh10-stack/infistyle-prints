@@ -4,6 +4,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getProductBySlug } from '@/lib/catalog';
+import { api } from '@/lib/aws/api';
 import { Search, SlidersHorizontal, ArrowLeft, Paintbrush, FileUp, Sparkles } from 'lucide-react';
 
 interface DesignTemplate {
@@ -155,16 +156,39 @@ export default function TemplatesContent() {
   const [customTemplates, setCustomTemplates] = useState<DesignTemplate[]>([]);
 
   useEffect(() => {
-    try {
-      const localTplsJson = localStorage.getItem('infistyle_custom_templates');
-      if (localTplsJson) {
-        const allTpls = JSON.parse(localTplsJson);
-        const filtered = allTpls.filter((t: any) => t.productSlug === slug);
-        setCustomTemplates(filtered);
+    const loadTemplates = async () => {
+      let dbTemplates: DesignTemplate[] = [];
+      
+      // 1. Fetch public database templates from Hono API
+      try {
+        const res = await api.getPublicTemplates(slug);
+        if (res && res.templates) {
+          dbTemplates = res.templates;
+        }
+      } catch (err) {
+        console.error('Error loading public templates from Hono:', err);
       }
-    } catch (err) {
-      console.error('Error loading custom templates:', err);
-    }
+
+      // 2. Fetch local storage templates (fallback/development)
+      try {
+        const localTplsJson = localStorage.getItem('infistyle_custom_templates');
+        if (localTplsJson) {
+          const allTpls = JSON.parse(localTplsJson);
+          const filtered = allTpls.filter((t: any) => t.productSlug === slug);
+          filtered.forEach((lt: any) => {
+            if (!dbTemplates.some(t => t.id === lt.id)) {
+              dbTemplates.push(lt);
+            }
+          });
+        }
+      } catch (err) {
+        console.error('Error loading local templates:', err);
+      }
+      
+      setCustomTemplates(dbTemplates);
+    };
+
+    loadTemplates();
   }, [slug]);
 
   const isVisitingCard = category.name === 'Visiting Cards';
