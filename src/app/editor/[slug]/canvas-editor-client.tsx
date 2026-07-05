@@ -19,6 +19,10 @@ export default function CanvasEditorClient() {
   const router = useRouter();
 
   const productData = getProductBySlug(slug);
+  const { product, category } = productData || { product: { name: '', slug: '', price: 0 }, category: { name: '', image: '' } };
+  const isApparel = category.name === 'Apparel' || slug.includes('tshirt') || slug.includes('shirt') || slug.includes('polo');
+
+  const [shirtColor, setShirtColor] = useState<'grey' | 'black' | 'blue'>('grey');
 
   // Configuration passed from details page
   const [qty, setQty] = useState<number>(Number(searchParams?.get('qty') || 100));
@@ -63,11 +67,14 @@ export default function CanvasEditorClient() {
   useEffect(() => {
     if (!canvasElRef.current) return;
 
-    // Initialize fabric Canvas (v6 API)
+    const canvasWidth = isApparel ? 260 : 550;
+    const canvasHeight = isApparel ? 130 : 350;
+    const canvasBg = isApparel ? 'transparent' : '#ffffff';
+
     const canvas = new Canvas(canvasElRef.current, {
-      width: 550,
-      height: 350,
-      backgroundColor: '#ffffff',
+      width: canvasWidth,
+      height: canvasHeight,
+      backgroundColor: canvasBg,
       selection: true,
     });
 
@@ -106,7 +113,7 @@ export default function CanvasEditorClient() {
         canvasRef.current.dispose();
       }
     };
-  }, []);
+  }, [slug, isApparel]);
 
   if (!productData) {
     return (
@@ -120,7 +127,7 @@ export default function CanvasEditorClient() {
     );
   }
 
-  const { product, category } = productData;
+
 
   // Toggle Front and Back Faces
   const handleToggleSide = (side: 'front' | 'back') => {
@@ -504,7 +511,7 @@ export default function CanvasEditorClient() {
             { id: 'text', label: 'Text', icon: Type },
             { id: 'uploads', label: 'Uploads', icon: ImageIcon },
             { id: 'graphics', label: 'Graphics', icon: Shapes },
-            { id: 'bg', label: 'BgColor', icon: Paintbrush },
+            { id: 'bg', label: isApparel ? 'Color' : 'BgColor', icon: Paintbrush },
             { id: 'qr', label: 'QR-Code', icon: QrCode }
           ].map((t) => {
             const Icon = t.icon;
@@ -594,20 +601,46 @@ export default function CanvasEditorClient() {
             </div>
           )}
 
-          {/* Tool: Bg Color */}
+          {/* Tool: Bg Color / Shirt Color */}
           {selectedTool === 'bg' && (
             <div className="space-y-4">
-              <h3 className="font-extrabold text-xs text-dark-charcoal uppercase tracking-wider">Card Background</h3>
-              <div className="grid grid-cols-5 gap-2">
-                {['#ffffff', '#1a1a1a', '#F5B800', '#0055ff', '#ea4335', '#34a853', '#fffbf0', '#faf3e0', '#f4f4f5', '#e2e8f0'].map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => handleBgChange(color)}
-                    className="w-8 h-8 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
+              <h3 className="font-extrabold text-xs text-dark-charcoal uppercase tracking-wider">
+                {isApparel ? 'Shirt Color' : 'Card Background'}
+              </h3>
+              {isApparel ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { name: 'grey', label: 'Grey', value: '#8A8A8A' },
+                    { name: 'black', label: 'Black', value: '#1A1A1A' },
+                    { name: 'blue', label: 'Navy Blue', value: '#003366' },
+                  ].map((color) => (
+                    <button
+                      key={color.name}
+                      onClick={() => setShirtColor(color.name as any)}
+                      className={`flex flex-col items-center justify-center p-2.5 border-2 rounded-xl transition-all ${
+                        shirtColor === color.name ? 'border-primary bg-yellow-50/20 font-black' : 'border-gray-200 hover:border-primary'
+                      }`}
+                    >
+                      <div
+                        className="w-7 h-7 rounded-full border border-gray-300 shadow-sm"
+                        style={{ backgroundColor: color.value }}
+                      />
+                      <span className="text-[9px] mt-1 text-dark-charcoal capitalize font-extrabold">{color.label}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-5 gap-2">
+                  {['#ffffff', '#1a1a1a', '#F5B800', '#0055ff', '#ea4335', '#34a853', '#fffbf0', '#faf3e0', '#f4f4f5', '#e2e8f0'].map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => handleBgChange(color)}
+                      className="w-8 h-8 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -702,24 +735,56 @@ export default function CanvasEditorClient() {
             )}
           </div>
 
-          {/* Interactive Canvas Container with Dotted Safety margins overlay */}
-          <div className="relative p-8 bg-white shadow-xl border-2 border-primary rounded-2xl">
-            {/* Safety Area guide overlay (4px inner margin) */}
-            <div className="absolute top-[36px] left-[36px] w-[542px] h-[342px] border-2 border-dashed border-yellow-500/50 pointer-events-none z-10">
-              <span className="absolute -top-5 left-1 text-[8px] font-black uppercase text-yellow-500/80 tracking-wider">
-                Safety Margin Boundary
-              </span>
-            </div>
+          {/* Dynamic Workbench Mockup container (Shirt model background or white Business Card bounds) */}
+          {isApparel ? (
+            <div className="relative w-[500px] h-[500px] bg-zinc-50 border-2 border-primary rounded-3xl overflow-hidden flex items-center justify-center shadow-lg">
+              {/* Background Model Mockup Image */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={
+                  shirtColor === 'black'
+                    ? '/ai_model_polo_black_front.png'
+                    : shirtColor === 'blue'
+                    ? '/ai_model_polo_tshirt.png'
+                    : '/ai_model_polo_grey_front.png'
+                }
+                alt="Shirt Mockup"
+                className={`absolute inset-0 w-full h-full object-cover transition-transform duration-300 ${
+                  activeSide === 'back' ? 'scale-x-[-1]' : ''
+                }`}
+              />
 
-            {/* Bleed Guide overlay */}
-            <div className="absolute top-[32px] left-[32px] w-[550px] h-[350px] border-2 border-blue-500/50 pointer-events-none z-10">
-              <span className="absolute bottom-1 right-2 text-[8px] font-black uppercase text-blue-500/80 tracking-wider">
-                Bleed Limit Boundary
-              </span>
-            </div>
+              {/* Print Area Guide Border */}
+              <div className="absolute top-[52%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[264px] h-[134px] border border-dashed border-cyan-400 bg-transparent pointer-events-none z-10">
+                <span className="absolute -top-4 left-0 text-[8px] font-bold text-cyan-400 tracking-wider bg-dark-charcoal/80 px-1.5 py-0.5 rounded">
+                  Safety Area (10.16cm x 25.4cm)
+                </span>
+              </div>
 
-            <canvas ref={canvasElRef} />
-          </div>
+              {/* Fabric Canvas positioned absolutely over the chest print area */}
+              <div className="absolute top-[52%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[260px] h-[130px] z-20">
+                <canvas ref={canvasElRef} />
+              </div>
+            </div>
+          ) : (
+            <div className="relative p-8 bg-white shadow-xl border-2 border-primary rounded-2xl animate-fade-in">
+              {/* Safety Area guide overlay (4px inner margin) */}
+              <div className="absolute top-[36px] left-[36px] w-[542px] h-[342px] border-2 border-dashed border-yellow-500/50 pointer-events-none z-10">
+                <span className="absolute -top-5 left-1 text-[8px] font-black uppercase text-yellow-500/80 tracking-wider">
+                  Safety Margin Boundary
+                </span>
+              </div>
+
+              {/* Bleed Guide overlay */}
+              <div className="absolute top-[32px] left-[32px] w-[550px] h-[350px] border-2 border-blue-500/50 pointer-events-none z-10">
+                <span className="absolute bottom-1 right-2 text-[8px] font-black uppercase text-blue-500/80 tracking-wider">
+                  Bleed Limit Boundary
+                </span>
+              </div>
+
+              <canvas ref={canvasElRef} />
+            </div>
+          )}
 
           {/* Zoom controls / info footer */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-white px-4 py-2 border border-primary/20 rounded-full shadow-sm text-xs font-bold text-gray-500">
