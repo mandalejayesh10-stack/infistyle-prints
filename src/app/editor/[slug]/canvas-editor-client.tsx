@@ -743,15 +743,13 @@ export default function CanvasEditorClient() {
               <img
                 src={
                   shirtColor === 'black'
-                    ? '/ai_model_polo_black_front.png'
+                    ? (activeSide === 'front' ? '/ai_model_polo_black_front.png' : '/ai_model_polo_black_back.png')
                     : shirtColor === 'blue'
-                    ? '/ai_model_polo_tshirt.png'
-                    : '/ai_model_polo_grey_front.png'
+                    ? (activeSide === 'front' ? '/ai_model_polo_tshirt.png' : '/ai_model_polo_blue_back.png')
+                    : (activeSide === 'front' ? '/ai_model_polo_grey_front.png' : '/ai_model_polo_grey_back.png')
                 }
                 alt="Shirt Mockup"
-                className={`absolute inset-0 w-full h-full object-cover transition-transform duration-300 ${
-                  activeSide === 'back' ? 'scale-x-[-1]' : ''
-                }`}
+                className="absolute inset-0 w-full h-full object-cover transition-all duration-300"
               />
 
               {/* Print Area Guide Border */}
