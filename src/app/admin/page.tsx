@@ -467,8 +467,12 @@ export default function AdminDashboard() {
     };
 
     try {
-      // 1. Save to DynamoDB database via Hono API
-      await api.savePublicTemplate(payload);
+      // 1. Save to DynamoDB database via Hono API with local fallback on error
+      try {
+        await api.savePublicTemplate(payload);
+      } catch (dbErr) {
+        console.warn('Failed to save template to database, falling back to local sync:', dbErr);
+      }
 
       // 2. Fallback local storage sync
       const localTplsJson = localStorage.getItem('infistyle_custom_templates');
@@ -485,11 +489,18 @@ export default function AdminDashboard() {
 
       localStorage.setItem('infistyle_custom_templates', JSON.stringify(localTpls));
 
-      // Reload templates from database
+      // Reload templates list
       try {
         const allRes = await api.getAllTemplates();
         if (allRes && allRes.templates) {
-          setTemplatesList(allRes.templates);
+          // Merge local templates that aren't in DB yet
+          const dbTemplates = [...allRes.templates];
+          localTpls.forEach((lt: any) => {
+            if (!dbTemplates.some(t => t.id === lt.id)) {
+              dbTemplates.push(lt);
+            }
+          });
+          setTemplatesList(dbTemplates);
         } else {
           setTemplatesList(localTpls);
         }
@@ -511,10 +522,14 @@ export default function AdminDashboard() {
     if (!confirm('Are you sure you want to delete this template?')) return;
 
     try {
-      // 1. Delete from DynamoDB database
-      const templateToDelete = templatesList.find(t => t.id === tplId);
-      if (templateToDelete) {
-        await api.deletePublicTemplate(templateToDelete.productSlug, tplId);
+      // 1. Delete from DynamoDB database with local fallback on error
+      try {
+        const templateToDelete = templatesList.find(t => t.id === tplId);
+        if (templateToDelete) {
+          await api.deletePublicTemplate(templateToDelete.productSlug, tplId);
+        }
+      } catch (dbErr) {
+        console.warn('Failed to delete template from database, reverting locally:', dbErr);
       }
 
       // 2. Delete from local storage fallback
@@ -525,7 +540,7 @@ export default function AdminDashboard() {
         localStorage.setItem('infistyle_custom_templates', JSON.stringify(filtered));
       }
 
-      // Reload templates list from database
+      // Reload templates list
       try {
         const allRes = await api.getAllTemplates();
         if (allRes && allRes.templates) {
