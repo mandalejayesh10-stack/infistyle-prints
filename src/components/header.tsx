@@ -138,52 +138,51 @@ export default function Header() {
                   <ChevronDown className="h-4 w-4" />
                 </button>
                 {profileDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white border-2 border-primary shadow-xl rounded-none z-50">
+                  <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 shadow-xl rounded-lg z-50 p-4">
                     {/* User Info Header */}
-                    <div className="px-4 py-3 bg-yellow-50 border-b border-primary/20">
-                      <p className="text-[10px] text-gray-500 font-black uppercase tracking-wider">Signed in as</p>
-                      <p className="text-xs font-black text-dark-charcoal truncate mt-0.5" title={user.email}>
-                        {user.email}
-                      </p>
+                    <div className="mb-2 px-1">
+                      <h4 className="font-extrabold text-sm text-dark-charcoal">
+                        Hello {user.user_metadata?.full_name?.split(' ')[0] || user.email.split('@')[0]}
+                      </h4>
+                      <p className="text-[10px] text-gray-400 font-bold mt-0.5">Account</p>
                     </div>
+
+                    <hr className="border-gray-100 my-1.5" />
 
                     {/* Navigation Links */}
-                    <div className="py-1">
-                      <Link
-                        href="/dashboard?tab=overview"
-                        onClick={() => setProfileDropdownOpen(false)}
-                        className="block px-4 py-2 text-xs text-dark-charcoal hover:bg-yellow-50 font-black uppercase tracking-wider"
-                      >
-                        Dashboard
-                      </Link>
-                      <Link
-                        href="/dashboard?tab=projects"
-                        onClick={() => setProfileDropdownOpen(false)}
-                        className="block px-4 py-2 text-xs text-dark-charcoal hover:bg-yellow-50 font-black uppercase tracking-wider"
-                      >
-                        My Projects
-                      </Link>
-                      <Link
-                        href="/dashboard?tab=orders"
-                        onClick={() => setProfileDropdownOpen(false)}
-                        className="block px-4 py-2 text-xs text-dark-charcoal hover:bg-yellow-50 font-black uppercase tracking-wider"
-                      >
-                        Order History & Reorder
-                      </Link>
-                      <Link
-                        href="/dashboard?tab=addresses"
-                        onClick={() => setProfileDropdownOpen(false)}
-                        className="block px-4 py-2 text-xs text-dark-charcoal hover:bg-yellow-50 font-black uppercase tracking-wider"
-                      >
-                        Account Settings
-                      </Link>
+                    <div className="space-y-0.5 py-1 max-h-[300px] overflow-y-auto pr-1">
+                      {[
+                        { label: 'Dashboard', tab: 'overview' },
+                        { label: 'Account Profile', tab: 'profile' },
+                        { label: 'My Projects', tab: 'projects' },
+                        { label: 'My Design Services', tab: 'services' },
+                        { label: 'Websites & Digital', tab: 'digital' },
+                        { label: 'Brand Kit', tab: 'brandkit' },
+                        { label: 'My Uploads', tab: 'uploads' },
+                        { label: 'My Favorites', tab: 'favourites' },
+                        { label: 'Order History & Reorder', tab: 'orders' },
+                        { label: 'Subscriptions', tab: 'subscriptions' },
+                        { label: 'Account Settings', tab: 'settings' },
+                        { label: 'Payment & Delivery', tab: 'payment' }
+                      ].map((item) => (
+                        <Link
+                          key={item.label}
+                          href={`/dashboard?tab=${item.tab}`}
+                          onClick={() => setProfileDropdownOpen(false)}
+                          className="block px-2 py-1 text-xs text-gray-700 hover:text-primary hover:bg-gray-50 font-semibold transition-all rounded"
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
                     </div>
 
-                    {/* Centered outlined Sign Out button */}
-                    <div className="p-3 border-t border-primary/20 bg-gray-50 flex justify-center">
+                    <hr className="border-gray-100 my-1.5" />
+
+                    {/* Sign Out Button */}
+                    <div className="pt-1.5">
                       <button
                         onClick={handleLogout}
-                        className="w-full text-center py-2 border-2 border-dark-charcoal text-dark-charcoal hover:bg-primary hover:border-primary text-xs font-black uppercase tracking-widest transition-all rounded-none cursor-pointer"
+                        className="w-full text-center py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-bold transition-all rounded-md cursor-pointer"
                       >
                         Sign out
                       </button>
