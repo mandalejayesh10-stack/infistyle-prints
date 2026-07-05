@@ -24,6 +24,26 @@ export default function LoginPanel() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  const handleBypassLogin = () => {
+    const payload = {
+      sub: 'dev-admin-id',
+      email: 'admin@infistyle.com',
+      name: 'Jayesh Mandale',
+      exp: Math.floor(Date.now() / 1000) + 86400 * 30, // 30 days
+      isAdmin: true
+    };
+    
+    // Browser-safe base64 encoding
+    const payloadBase64 = btoa(JSON.stringify(payload));
+    const mockJwt = `header.${payloadBase64}.signature`;
+    
+    // Set cookies & local storage
+    document.cookie = `infistyle_session=${mockJwt}; path=/; max-age=2592000`;
+    localStorage.setItem('infistyle_access_token', mockJwt);
+    
+    window.location.href = next;
+  };
+
   const handleGoogleLogin = () => {
     setLoading(true);
     setMessage(null);
@@ -309,10 +329,20 @@ export default function LoginPanel() {
             </>
           )}
 
-          <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-400 font-medium">
-            <span>Secure Cognito Login</span>
-            <span>•</span>
-            <span>Multi-User System</span>
+          <div className="mt-6 pt-4 border-t border-gray-100 flex flex-col gap-3 items-center text-[10px] text-gray-400 font-medium">
+            <div className="flex items-center justify-between w-full">
+              <span>Secure Cognito Login</span>
+              <span>•</span>
+              <span>Multi-User System</span>
+            </div>
+            
+            <button
+              type="button"
+              onClick={handleBypassLogin}
+              className="mt-1 text-[9px] font-black text-primary hover:underline cursor-pointer border-2 border-primary px-3 py-1 rounded bg-yellow-50/10 tracking-widest uppercase"
+            >
+              🔧 DEV BYPASS: LOG IN AS ADMIN
+            </button>
           </div>
 
         </div>
