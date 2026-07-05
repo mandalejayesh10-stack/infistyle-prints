@@ -43,14 +43,15 @@ app.get('/catalog', async (c) => {
     // Fetch all products (items under categories)
     const allProducts = await db.scan();
     for (const prod of allProducts) {
-      if (prod.SK.startsWith('PRODUCT#')) {
+      if (prod.PK.startsWith('PRODUCT#') && prod.SK === 'METADATA') {
         const catSlug = prod.categorySlug;
         if (categoriesMap[catSlug]) {
           categoriesMap[catSlug].items.push({
             name: prod.name,
-            slug: prod.SK.replace('PRODUCT#', ''),
+            slug: prod.PK.replace('PRODUCT#', ''),
             price: prod.price,
             features: prod.features || [],
+            images: prod.images || [],
           });
         }
       }
@@ -59,6 +60,35 @@ app.get('/catalog', async (c) => {
     return c.json({ categories: Object.values(categoriesMap) });
   } catch (err: any) {
     return c.json({ error: 'Failed to fetch catalog: ' + err.message }, 500);
+  }
+});
+
+// Save or Update catalog product (Admin only)
+app.post('/catalog/products', authMiddleware, adminMiddleware, async (c) => {
+  try {
+    const body = await c.req.json();
+    const slug = body.slug || body.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, '');
+    
+    // Map category name to slug
+    const categoryName = body.category || 'Visiting Cards';
+    const categorySlug = categoryName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, '');
+
+    const productItem = {
+      PK: `PRODUCT#${slug}`,
+      SK: 'METADATA',
+      categorySlug,
+      name: body.name,
+      price: Number(body.base_price),
+      features: body.features || [],
+      images: body.images || [],
+      options_json: body.options_json || { finishes: ['Standard Matte', 'Standard Glossy'], corners: ['Square'], quantities: [100, 200, 500] },
+      updatedAt: new Date().toISOString(),
+    };
+
+    await db.put(productItem);
+    return c.json({ success: true, slug });
+  } catch (err: any) {
+    return c.json({ error: 'Failed to save product: ' + err.message }, 500);
   }
 });
 
@@ -82,6 +112,17 @@ app.put('/catalog/products/:slug/price', authMiddleware, adminMiddleware, async 
     return c.json({ success: true, updated });
   } catch (err: any) {
     return c.json({ error: 'Failed to update pricing: ' + err.message }, 500);
+  }
+});
+
+// Delete catalog product (Admin only)
+app.delete('/catalog/products/:slug', authMiddleware, adminMiddleware, async (c) => {
+  try {
+    const { slug } = c.req.param();
+    await db.delete(`PRODUCT#${slug}`, 'METADATA');
+    return c.json({ success: true });
+  } catch (err: any) {
+    return c.json({ error: 'Failed to delete product: ' + err.message }, 500);
   }
 });
 

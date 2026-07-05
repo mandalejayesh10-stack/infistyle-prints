@@ -60,6 +60,12 @@ export const api = {
     
   seedCatalog: () => request('/seed', { method: 'POST' }),
 
+  saveProduct: (product: any) => 
+    request('/catalog/products', { method: 'POST', body: JSON.stringify(product) }),
+    
+  deleteProduct: (slug: string) => 
+    request(`/catalog/products/${slug}`, { method: 'DELETE' }),
+
   savePublicTemplate: (template: {
     id?: string;
     name: string;

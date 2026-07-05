@@ -346,16 +346,17 @@ export default function AdminDashboard() {
       options_json: { finishes: ['Standard Matte', 'Standard Glossy'], corners: ['Square'], quantities: [100, 200, 500] }
     };
 
-    // Save to local storage cache immediately so it displays in main pages instantly
+    // Save to local storage cache immediately
     saveProductToLocalCache({
       id: isEditMode && activeProductId ? activeProductId : payload.slug,
       ...payload
     });
 
     try {
-      if (isEditMode && activeProductId) {
-        await api.updateProductPrice(payload.slug, updatedPrice);
+      // 1. Save product payload to database via Hono API
+      await api.saveProduct(payload);
 
+      if (isEditMode && activeProductId) {
         setProductsList(productsList.map(p => p.id === activeProductId ? { ...p, ...payload, base_price: updatedPrice } : p));
         setToast('Product details updated successfully.');
       } else {
@@ -370,49 +371,42 @@ export default function AdminDashboard() {
       setTimeout(() => setToast(''), 3000);
     } catch (err) {
       console.error(err);
-      setToast('Failed to update pricing.');
+      setToast('Failed to save product in database.');
       setTimeout(() => setToast(''), 3000);
     }
   };
 
-  // Delete product from Supabase and cache, or reset default catalog items
+  // Delete product from Hono backend and cache
   const handleDeleteProduct = async (prodId: string, slug: string) => {
-    if (!confirm('Are you sure you want to delete this product? For default catalog products, this will reset them to their default state.')) {
+    if (!confirm('Are you sure you want to delete this product?')) {
       return;
     }
 
-    // 1. Remove from localStorage cache
     try {
-      const localProdsJson = localStorage.getItem('infistyle_custom_products');
-      if (localProdsJson) {
-        const localProds = JSON.parse(localProdsJson);
-        const filtered = localProds.filter((p: any) => p.slug !== slug);
-        localStorage.setItem('infistyle_custom_products', JSON.stringify(filtered));
+      // 1. Delete from database via Hono API
+      await api.deleteProduct(slug);
+
+      // 2. Remove from localStorage cache
+      try {
+        const localProdsJson = localStorage.getItem('infistyle_custom_products');
+        if (localProdsJson) {
+          const localProds = JSON.parse(localProdsJson);
+          const filtered = localProds.filter((p: any) => p.slug !== slug);
+          localStorage.setItem('infistyle_custom_products', JSON.stringify(filtered));
+        }
+      } catch (err) {
+        console.error('Error deleting product from local cache:', err);
       }
-    } catch (err) {
-      console.error('Error deleting product from local cache:', err);
-    }
 
-    // 2. Revert dynamic status locally
-    setToast('Product updated in local view.');
-
-    // 3. Update UI state: revert static catalog item or remove custom item
-    const staticItem = PRODUCT_CATALOG.flatMap(c => c.items.map(item => ({ item, catName: c.name }))).find(x => x.item.slug === slug);
-    if (staticItem) {
-      setProductsList(productsList.map(p => p.slug === slug ? {
-        id: slug,
-        name: staticItem.item.name,
-        slug: slug,
-        category: staticItem.catName,
-        base_price: staticItem.item.price,
-        features: staticItem.item.features,
-        images: []
-      } : p));
-    } else {
+      // 3. Update UI state: remove product
       setProductsList(productsList.filter(p => p.id !== prodId && p.slug !== slug));
+      setToast('Product deleted successfully.');
+      setTimeout(() => setToast(''), 3000);
+    } catch (err) {
+      console.error(err);
+      setToast('Failed to delete product from database.');
+      setTimeout(() => setToast(''), 3000);
     }
-
-    setTimeout(() => setToast(''), 3000);
   };
 
   // Template Manager Handlers
