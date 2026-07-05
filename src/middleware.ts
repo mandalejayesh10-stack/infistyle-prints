@@ -5,7 +5,7 @@ function parseJwt(token: string): any {
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = Buffer.from(base64, 'base64').toString();
+    const jsonPayload = atob(base64);
     return JSON.parse(jsonPayload);
   } catch (err) {
     return null;
@@ -45,8 +45,8 @@ export function middleware(request: NextRequest) {
 
     // 2. Redirect non-admins trying to access /admin
     if (path.startsWith('/admin')) {
-      const groups = claims['cognito:groups'] || [];
-      const isAdmin = groups.includes('Admin') || claims.email === 'admin@infistyle.com' || claims.isAdmin === true;
+      const groups = claims?.['cognito:groups'] || [];
+      const isAdmin = claims && (groups.includes('Admin') || claims.email === 'admin@infistyle.com' || claims.isAdmin === true);
       
       if (!isAdmin) {
         const url = request.nextUrl.clone();
