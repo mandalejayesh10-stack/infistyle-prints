@@ -43,7 +43,7 @@ export default async function Home() {
 
           <div className="lg:col-span-5 relative hidden lg:block h-[450px]">
             {/* Main Mockup: Model with Business Card */}
-            <div className="absolute top-0 right-4 w-72 h-[380px] brand-card bg-white shadow-2xl rotate-2 transition-transform duration-300 hover:rotate-0 hover:scale-105 overflow-hidden z-10">
+            <Link href="/catalog?category=Visiting%20Cards" className="absolute top-0 right-4 w-72 h-[380px] brand-card bg-white shadow-2xl rotate-2 transition-transform duration-300 hover:rotate-0 hover:scale-105 overflow-hidden z-10 cursor-pointer block">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src="/ai_model_visiting_card.png" 
@@ -54,10 +54,10 @@ export default async function Home() {
                 <span className="text-[10px] font-black text-primary uppercase tracking-widest block">Visiting Cards</span>
                 <h3 className="font-extrabold text-sm text-dark-charcoal mt-0.5">Premium Matte Finish</h3>
               </div>
-            </div>
+            </Link>
 
             {/* Overlapping Mockup: Model with Custom Apparel */}
-            <div className="absolute bottom-4 left-4 w-56 h-[260px] brand-card bg-white shadow-xl -rotate-6 transition-transform duration-300 hover:rotate-0 hover:scale-105 overflow-hidden z-20">
+            <Link href="/catalog?category=Apparel" className="absolute bottom-4 left-4 w-56 h-[260px] brand-card bg-white shadow-xl -rotate-6 transition-transform duration-300 hover:rotate-0 hover:scale-105 overflow-hidden z-20 cursor-pointer block">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src="/ai_model_polo_tshirt.png" 
@@ -68,7 +68,7 @@ export default async function Home() {
                 <span className="text-[9px] font-black text-primary uppercase tracking-widest block">Apparel & Caps</span>
                 <h3 className="font-extrabold text-xs text-dark-charcoal mt-0.5">Custom Pique Polo Shirts</h3>
               </div>
-            </div>
+            </Link>
 
             {/* background circle decor */}
             <div className="absolute -top-10 -right-10 h-72 w-72 rounded-full bg-primary/15 -z-10 blur-2xl"></div>
