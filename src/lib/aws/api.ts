@@ -84,4 +84,9 @@ export const api = {
   
   deletePublicTemplate: (productSlug: string, templateId: string) => 
     request(`/templates/${productSlug}/${templateId}`, { method: 'DELETE' }),
+
+  syncCart: (cart: { userId: string; userEmail: string; userName: string; items: any[] }) =>
+    request('/cart', { method: 'POST', body: JSON.stringify(cart) }),
+
+  getActiveCarts: () => request('/admin/carts'),
 };

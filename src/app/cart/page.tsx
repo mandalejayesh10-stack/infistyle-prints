@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Trash2, ShoppingBag, ArrowRight, CornerDownRight, ShieldCheck, ChevronRight } from 'lucide-react';
 
+import { syncCartToBackend } from '@/lib/cart-sync';
+
 interface CartItem {
   id: string;
   productName: string;
@@ -38,12 +40,14 @@ export default function CartPage() {
     });
     setCartItems(updated);
     localStorage.setItem('infistyle_cart', JSON.stringify(updated));
+    syncCartToBackend(updated);
   };
 
   const removeItem = (id: string) => {
     const updated = cartItems.filter(item => item.id !== id);
     setCartItems(updated);
     localStorage.setItem('infistyle_cart', JSON.stringify(updated));
+    syncCartToBackend(updated);
     // Dispatch a storage event to sync header count instantly
     window.dispatchEvent(new Event('storage'));
   };

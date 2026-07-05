@@ -72,6 +72,8 @@ export default function AdminDashboard() {
   const [showTemplatesModal, setShowTemplatesModal] = useState(false);
   const [activeProductForTemplates, setActiveProductForTemplates] = useState<ManageProduct | null>(null);
   const [templatesList, setTemplatesList] = useState<any[]>([]);
+  const [activeAdminTab, setActiveAdminTab] = useState<'dashboard' | 'carts'>('dashboard');
+  const [activeCarts, setActiveCarts] = useState<any[]>([]);
 
   // Template Form States
   const [templateEditMode, setTemplateEditMode] = useState(false);
@@ -215,6 +217,57 @@ export default function AdminDashboard() {
           }
         }
         setTemplatesList(templates);
+
+        // Load active customer carts from Hono API with fallback
+        try {
+          const res = await api.getActiveCarts();
+          if (res && res.carts) {
+            setActiveCarts(res.carts);
+          }
+        } catch (err) {
+          console.warn('Failed to load active carts, falling back to mock carts:', err);
+          // Set mock carts for testing
+          setActiveCarts([
+            {
+              userId: 'GUEST-K8S2X4',
+              userEmail: 'Guest',
+              userName: 'Guest (Mumbai)',
+              updatedAt: new Date().toISOString(),
+              items: [
+                {
+                  id: 'item_mock01',
+                  productName: 'Standard Visiting Cards',
+                  productSlug: 'standard-visiting-cards',
+                  qty: 200,
+                  finish: 'Standard Matte',
+                  corners: 'Square',
+                  speed: 'Standard',
+                  unitPrice: 2,
+                  thumbnail: '/ai_model_visiting_card.png'
+                }
+              ]
+            },
+            {
+              userId: 'USER-99B77',
+              userEmail: 'priya@example.com',
+              userName: 'Priya Patel',
+              updatedAt: new Date(Date.now() - 3600 * 1000).toISOString(),
+              items: [
+                {
+                  id: 'item_mock02',
+                  productName: 'Embroidered Polo Shirt',
+                  productSlug: 'mens-polo',
+                  qty: 100,
+                  finish: 'Premium Glossy',
+                  corners: 'Square',
+                  speed: 'Express',
+                  unitPrice: 5.9,
+                  thumbnail: '/ai_model_polo_tshirt.png'
+                }
+              ]
+            }
+          ]);
+        }
 
       } catch (err) {
         console.error('Error fetching admin dashboard details:', err);
@@ -613,207 +666,246 @@ export default function AdminDashboard() {
         </Link>
       </div>
 
-      {/* Metric Widgets */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="brand-card p-5 flex items-center gap-4 bg-white">
-          <div className="h-12 w-12 rounded-full border-2 border-primary bg-yellow-50/10 flex items-center justify-center text-primary">
-            <BarChart3 className="h-6 w-6" />
-          </div>
-          <div>
-            <span className="text-[9px] font-black uppercase text-gray-400">Total Revenue</span>
-            <h3 className="text-xl font-black text-dark-charcoal">₹{totalRevenue.toFixed(2)}</h3>
-          </div>
-        </div>
-
-        <div className="brand-card p-5 flex items-center gap-4 bg-white">
-          <div className="h-12 w-12 rounded-full border-2 border-primary bg-yellow-50/10 flex items-center justify-center text-primary">
-            <ShoppingBag className="h-6 w-6" />
-          </div>
-          <div>
-            <span className="text-[9px] font-black uppercase text-gray-400">Active Orders</span>
-            <h3 className="text-xl font-black text-dark-charcoal">{pendingCount} orders</h3>
-          </div>
-        </div>
-
-        <div className="brand-card p-5 flex items-center gap-4 bg-white">
-          <div className="h-12 w-12 rounded-full border-2 border-primary bg-yellow-50/10 flex items-center justify-center text-primary">
-            <RefreshCw className="h-6 w-6" />
-          </div>
-          <div>
-            <span className="text-[9px] font-black uppercase text-gray-400">Pending Printing</span>
-            <h3 className="text-xl font-black text-dark-charcoal">{printingCount} orders</h3>
-          </div>
-        </div>
-
-        <div className="brand-card p-5 flex items-center gap-4 bg-white">
-          <div className="h-12 w-12 rounded-full border-2 border-primary bg-yellow-50/10 flex items-center justify-center text-primary">
-            <Layers className="h-6 w-6" />
-          </div>
-          <div>
-            <span className="text-[9px] font-black uppercase text-gray-400">Catalog Items</span>
-            <h3 className="text-xl font-black text-dark-charcoal">{productsList.length} items</h3>
-          </div>
-        </div>
+      {/* Tab Navigation */}
+      <div className="flex gap-4 border-b-2 border-primary/20 pb-4 mb-6">
+        <button
+          onClick={() => setActiveAdminTab('dashboard')}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider border-2 rounded-xl transition-all ${
+            activeAdminTab === 'dashboard'
+              ? 'bg-primary text-dark-charcoal border-primary'
+              : 'border-gray-200 hover:border-primary text-gray-500 bg-white cursor-pointer'
+          }`}
+        >
+          📊 Orders & Catalog
+        </button>
+        <button
+          onClick={() => setActiveAdminTab('carts')}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider border-2 rounded-xl transition-all relative ${
+            activeAdminTab === 'carts'
+              ? 'bg-primary text-dark-charcoal border-primary'
+              : 'border-gray-200 hover:border-primary text-gray-500 bg-white cursor-pointer'
+          }`}
+        >
+          🛒 Customer Live Carts
+          {activeCarts.length > 0 && (
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm animate-pulse">
+              {activeCarts.length}
+            </span>
+          )}
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* Left 8 Cols: Orders Table & Product Manager */}
-        <div className="lg:col-span-8 space-y-8">
-          
-          {/* Section: Orders List */}
-          <div className="brand-card p-6 bg-white">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-              <h2 className="text-base font-black text-dark-charcoal uppercase tracking-wider">Print Orders Queue</h2>
-              <div className="w-full sm:w-60 relative">
-                <input
-                  type="text"
-                  placeholder="Search orders..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-1.5 border-2 border-primary rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 text-xs text-dark-charcoal font-semibold"
-                />
-                <Search className="h-4 w-4 text-primary absolute left-3 top-2" />
+      {activeAdminTab === 'dashboard' ? (
+        <>
+          {/* Metric Widgets */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-fade-in">
+            <div className="brand-card p-5 flex items-center gap-4 bg-white">
+              <div className="h-12 w-12 rounded-full border-2 border-primary bg-yellow-50/10 flex items-center justify-center text-primary">
+                <BarChart3 className="h-6 w-6" />
               </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b-2 border-yellow-50 text-gray-400 font-extrabold uppercase tracking-wider">
-                    <th className="pb-3">Order ID</th>
-                    <th className="pb-3">Customer</th>
-                    <th className="pb-3">Total Due</th>
-                    <th className="pb-3">Payment</th>
-                    <th className="pb-3">Status</th>
-                    <th className="pb-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-50 font-semibold text-gray-600">
-                  {filteredOrders.map((ord) => (
-                    <tr key={ord.id} className={`hover:bg-yellow-50/10 ${selectedOrder?.id === ord.id ? 'bg-yellow-50/20' : ''}`}>
-                      <td className="py-4 font-black text-dark-charcoal">{ord.id.toUpperCase().slice(0, 8)}</td>
-                      <td className="py-4">
-                        <p className="font-extrabold text-dark-charcoal leading-none">{ord.customerName}</p>
-                        <span className="text-[10px] text-gray-400 font-bold">{ord.customerEmail}</span>
-                      </td>
-                      <td className="py-4 font-extrabold text-primary">₹{ord.total.toFixed(2)}</td>
-                      <td className="py-4">
-                        <span className="uppercase text-[10px]">{ord.paymentMethod}</span>
-                        <span className={`block text-[8px] font-black uppercase ${ord.paymentStatus === 'success' ? 'text-green-600' : 'text-yellow-600'}`}>
-                          {ord.paymentStatus}
-                        </span>
-                      </td>
-                      <td className="py-4">
-                        <select
-                          value={ord.status}
-                          onChange={(e) => handleUpdateStatus(ord.id, e.target.value as any)}
-                          className="input-brand text-[10px] py-1.5 px-1.5 font-bold"
-                        >
-                          <option value="received">Received</option>
-                          <option value="printing">Printing</option>
-                          <option value="shipped">Shipped</option>
-                          <option value="delivered">Delivered</option>
-                        </select>
-                      </td>
-                      <td className="py-4 text-right space-x-1.5">
-                        <button
-                          onClick={() => setSelectedOrder(ord)}
-                          className="p-1.5 border border-primary hover:bg-primary rounded-lg text-dark-charcoal transition-colors cursor-pointer"
-                        >
-                          <MapPin className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => alert('Downloading print file assets payload...')}
-                          className="p-1.5 border border-primary hover:bg-primary rounded-lg text-dark-charcoal transition-colors cursor-pointer"
-                        >
-                          <Download className="h-4 w-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Section: Catalog Product & Price Manager */}
-          <div className="brand-card p-6 bg-white relative">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <div>
-                <h2 className="text-base font-black text-dark-charcoal uppercase tracking-wider">Catalog Catalog Manager</h2>
-                <p className="text-[10px] text-gray-400 font-semibold mt-0.5">Configure prices, add product specifications, and upload galleries.</p>
+                <span className="text-[9px] font-black uppercase text-gray-400">Total Revenue</span>
+                <h3 className="text-xl font-black text-dark-charcoal">₹{totalRevenue.toFixed(2)}</h3>
               </div>
-              <button
-                onClick={handleOpenAddProduct}
-                className="btn-primary text-xs py-1.5 px-4 flex items-center gap-1 cursor-pointer"
-              >
-                <Plus className="h-4 w-4" /> Add Product
-              </button>
             </div>
 
-            <div className="mb-4">
-              <input
-                type="text"
-                placeholder="Search products by name/category..."
-                value={productSearch}
-                onChange={(e) => setProductSearch(e.target.value)}
-                className="w-full input-brand text-xs py-2 font-bold"
-              />
+            <div className="brand-card p-5 flex items-center gap-4 bg-white">
+              <div className="h-12 w-12 rounded-full border-2 border-primary bg-yellow-50/10 flex items-center justify-center text-primary">
+                <ShoppingBag className="h-6 w-6" />
+              </div>
+              <div>
+                <span className="text-[9px] font-black uppercase text-gray-400">Active Orders</span>
+                <h3 className="text-xl font-black text-dark-charcoal">{pendingCount} orders</h3>
+              </div>
             </div>
 
-            <div className="overflow-x-auto max-h-96 overflow-y-auto pr-2">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b-2 border-yellow-50 text-gray-400 font-extrabold uppercase tracking-wider">
-                    <th className="pb-3">Name</th>
-                    <th className="pb-3">Category</th>
-                    <th className="pb-3">Base Unit Price</th>
-                    <th className="pb-3">Display Images</th>
-                    <th className="pb-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-50 font-semibold text-gray-600">
-                  {filteredProducts.map((prod) => (
-                    <tr key={prod.id} className="hover:bg-yellow-50/10">
-                      <td className="py-3 font-extrabold text-dark-charcoal">{prod.name}</td>
-                      <td className="py-3">{prod.category}</td>
-                      <td className="py-3 font-black text-dark-charcoal">₹{prod.base_price.toFixed(2)}</td>
-                      <td className="py-3 font-bold text-gray-400">
-                        {prod.images && prod.images.length > 0 ? (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-dark-charcoal font-extrabold">{prod.images.length}</span> photos
-                          </div>
-                        ) : (
-                          <span>None</span>
-                        )}
-                      </td>
-                      <td className="py-3 text-right flex items-center justify-end gap-3.5">
-                        <button
-                          onClick={() => handleOpenTemplatesManager(prod)}
-                          className="text-xs text-primary hover:underline font-bold flex items-center gap-1 cursor-pointer"
-                        >
-                          <Layers className="h-3.5 w-3.5" /> Templates
-                        </button>
-                        <button
-                          onClick={() => handleOpenEditProduct(prod)}
-                          className="text-xs text-primary hover:underline font-bold flex items-center gap-1 cursor-pointer"
-                        >
-                          <Edit3 className="h-3.5 w-3.5" /> Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteProduct(prod.id, prod.slug)}
-                          className="text-xs text-red-500 hover:underline font-bold flex items-center gap-1 cursor-pointer"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" /> Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="brand-card p-5 flex items-center gap-4 bg-white">
+              <div className="h-12 w-12 rounded-full border-2 border-primary bg-yellow-50/10 flex items-center justify-center text-primary">
+                <RefreshCw className="h-6 w-6" />
+              </div>
+              <div>
+                <span className="text-[9px] font-black uppercase text-gray-400">Pending Printing</span>
+                <h3 className="text-xl font-black text-dark-charcoal">{printingCount} orders</h3>
+              </div>
+            </div>
+
+            <div className="brand-card p-5 flex items-center gap-4 bg-white">
+              <div className="h-12 w-12 rounded-full border-2 border-primary bg-yellow-50/10 flex items-center justify-center text-primary">
+                <Layers className="h-6 w-6" />
+              </div>
+              <div>
+                <span className="text-[9px] font-black uppercase text-gray-400">Catalog Items</span>
+                <h3 className="text-xl font-black text-dark-charcoal">{productsList.length} items</h3>
+              </div>
             </div>
           </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-fade-in">
+            
+            {/* Left 8 Cols: Orders Table & Product Manager */}
+            <div className="lg:col-span-8 space-y-8">
+              
+              {/* Section: Orders List */}
+              <div className="brand-card p-6 bg-white">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-yellow-100 mb-6">
+                  <h2 className="text-base font-black text-dark-charcoal uppercase tracking-wider">Print Orders Queue</h2>
+                  <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search orders..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-4 py-1.5 border-2 border-primary focus:outline-none text-xs bg-white font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-primary/20 text-[9px] font-black uppercase text-gray-400 tracking-wider">
+                        <th className="pb-3">Order ID</th>
+                        <th className="pb-3">Customer</th>
+                        <th className="pb-3">Date</th>
+                        <th className="pb-3">Total</th>
+                        <th className="pb-3 text-center">Status</th>
+                        <th className="pb-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 text-xs font-bold text-gray-500">
+                      {filteredOrders.map((ord) => (
+                        <tr 
+                          key={ord.id} 
+                          onClick={() => setSelectedOrder(ord)}
+                          className={`hover:bg-yellow-50/15 cursor-pointer transition-colors ${
+                            selectedOrder?.id === ord.id ? 'bg-yellow-50/20' : ''
+                          }`}
+                        >
+                          <td className="py-3 font-mono text-[10px] text-dark-charcoal">{ord.id.slice(0, 8).toUpperCase()}</td>
+                          <td className="py-3 text-dark-charcoal">
+                            <div>{ord.customerName}</div>
+                            <div className="text-[9px] text-gray-400 font-bold">{ord.customerEmail}</div>
+                          </td>
+                          <td className="py-3">{ord.date}</td>
+                          <td className="py-3 text-dark-charcoal font-black">₹{ord.total.toFixed(2)}</td>
+                          <td className="py-3">
+                            <div className="flex justify-center">
+                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
+                                ord.status === 'delivered' 
+                                  ? 'bg-green-50 text-green-700 border-green-200' 
+                                  : ord.status === 'shipped'
+                                  ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                  : ord.status === 'printing'
+                                  ? 'bg-yellow-50 text-yellow-700 border-yellow-200 animate-pulse'
+                                  : 'bg-orange-50 text-orange-700 border-orange-200'
+                              }`}>
+                                {ord.status}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                            <select
+                              value={ord.status}
+                              onChange={(e) => handleUpdateStatus(ord.id, e.target.value as any)}
+                              className="text-[10px] bg-white border border-primary/20 rounded p-1 font-black uppercase"
+                            >
+                              <option value="received">Received</option>
+                              <option value="printing">Printing</option>
+                              <option value="shipped">Shipped</option>
+                              <option value="delivered">Delivered</option>
+                            </select>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Section: Catalog Manager */}
+              <div className="brand-card p-6 bg-white">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-yellow-100 mb-6">
+                  <div>
+                    <h2 className="text-base font-black text-dark-charcoal uppercase tracking-wider">Catalog Catalog Manager</h2>
+                    <p className="text-[10px] text-gray-400 font-bold mt-1">Configure prices, add product specifications, and upload galleries.</p>
+                  </div>
+                  <button 
+                    onClick={handleOpenAddProduct}
+                    className="btn-primary text-xs flex items-center gap-1 py-2 px-6 cursor-pointer"
+                  >
+                    <Plus className="h-4 w-4" /> Add Product
+                  </button>
+                </div>
+
+                <div className="mb-6 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search products by name/category..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 border-2 border-primary focus:outline-none text-xs bg-white font-bold"
+                  />
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-primary/20 text-[9px] font-black uppercase text-gray-400 tracking-wider">
+                        <th className="pb-3">Name</th>
+                        <th className="pb-3">Category</th>
+                        <th className="pb-3">Base Unit Price</th>
+                        <th className="pb-3">Display Images</th>
+                        <th className="pb-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-50 font-semibold text-gray-600">
+                      {productsList
+                        .filter(p => 
+                          p.name.toLowerCase().includes(productSearch.toLowerCase()) || 
+                          p.category.toLowerCase().includes(productSearch.toLowerCase())
+                        )
+                        .map((prod) => (
+                          <tr key={prod.id} className="hover:bg-yellow-50/10 animate-fade-in">
+                            <td className="py-3 font-extrabold text-dark-charcoal">{prod.name}</td>
+                            <td className="py-3">{prod.category}</td>
+                            <td className="py-3 font-black text-dark-charcoal">₹{prod.base_price.toFixed(2)}</td>
+                            <td className="py-3 font-bold text-gray-400">
+                              {prod.images && prod.images.length > 0 ? (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-dark-charcoal font-extrabold">{prod.images.length}</span> photos
+                                </div>
+                              ) : (
+                                <span>None</span>
+                              )}
+                            </td>
+                            <td className="py-3 text-right flex items-center justify-end gap-3.5">
+                              <button
+                                onClick={() => handleOpenTemplatesManager(prod)}
+                                className="text-xs text-primary hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                              >
+                                <Layers className="h-3.5 w-3.5" /> Templates
+                              </button>
+                              <button
+                                onClick={() => handleOpenEditProduct(prod)}
+                                className="text-xs text-primary hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                              >
+                                <Edit3 className="h-3.5 w-3.5" /> Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteProduct(prod.id, prod.slug)}
+                                className="text-xs text-red-500 hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" /> Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
         </div>
 
@@ -859,6 +951,106 @@ export default function AdminDashboard() {
         </div>
 
       </div>
+        </>
+      ) : (
+        <div className="brand-card p-6 bg-white space-y-6 animate-fade-in">
+          <div className="flex justify-between items-center pb-4 border-b border-primary/10">
+            <div>
+              <h2 className="text-base font-black text-dark-charcoal uppercase tracking-wider">Customer Live Carts Monitor</h2>
+              <p className="text-[10px] text-gray-400 font-bold mt-1">Track shopping carts and item specifications created by customers in real-time.</p>
+            </div>
+            <button
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  const res = await api.getActiveCarts();
+                  if (res && res.carts) {
+                    setActiveCarts(res.carts);
+                  }
+                } catch (err) {}
+                setLoading(false);
+              }}
+              className="btn-primary text-xs flex items-center gap-1.5 py-2 px-6 cursor-pointer"
+            >
+              <RefreshCw className="h-3 w-3" /> Refresh
+            </button>
+          </div>
+
+          {activeCarts.length === 0 ? (
+            <div className="p-16 text-center text-gray-400 font-semibold text-xs leading-relaxed">
+              No active customer shopping carts found in the database.
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {activeCarts.map((cart) => (
+                <div key={cart.userId} className="border-2 border-primary rounded-2xl p-5 space-y-4">
+                  {/* Cart Owner Header */}
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-dashed border-primary/20">
+                    <div>
+                      <span className="text-[9px] font-black uppercase text-gray-400 font-bold">Cart Owner</span>
+                      <h4 className="text-xs font-black text-dark-charcoal flex items-center gap-1.5 mt-0.5">
+                        👤 {cart.userName} 
+                        {cart.userEmail && cart.userEmail !== 'Guest' && (
+                          <span className="text-[10px] text-primary bg-yellow-50 px-2 py-0.5 rounded font-black border border-primary/20">
+                            ✉️ {cart.userEmail}
+                          </span>
+                        )}
+                      </h4>
+                    </div>
+                    <div className="text-right sm:text-right">
+                      <span className="text-[9px] font-black uppercase text-gray-400 font-bold block">Last Active</span>
+                      <span className="text-[10px] text-gray-500 font-bold">
+                        {new Date(cart.updatedAt).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Cart Items List */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {cart.items.map((item: any) => (
+                      <div key={item.id} className="flex gap-4 p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
+                        {/* Thumbnail */}
+                        {item.thumbnail ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={item.thumbnail}
+                            alt={item.productName}
+                            className="w-16 h-16 object-cover rounded-lg border border-gray-200 bg-white"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 bg-white border border-gray-200 rounded-lg flex items-center justify-center text-gray-300">
+                            <ShoppingBag className="h-6 w-6" />
+                          </div>
+                        )}
+
+                        {/* Item Info */}
+                        <div className="flex-1 space-y-1">
+                          <h5 className="text-[11px] font-black text-dark-charcoal leading-tight">
+                            {item.productName}
+                          </h5>
+                          <div className="flex flex-wrap gap-1 text-[8px] font-black uppercase text-gray-400">
+                            <span className="bg-zinc-200/50 px-1 py-0.5 rounded border border-zinc-200">{item.finish}</span>
+                            {item.corners && (
+                              <span className="bg-zinc-200/50 px-1 py-0.5 rounded border border-zinc-200">{item.corners} Corners</span>
+                            )}
+                            <span className="bg-zinc-200/50 px-1 py-0.5 rounded border border-zinc-200">{item.speed} Delivery</span>
+                          </div>
+                          <div className="pt-1 flex justify-between items-center">
+                            <span className="text-[10px] font-bold text-gray-500">Qty: {item.qty}</span>
+                            <span className="text-[10px] font-black text-primary bg-yellow-50 border border-primary/20 px-1.5 py-0.5 rounded">
+                              ₹{(item.unitPrice * item.qty).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Dynamic Modal Drawer to Add or Edit Products (including multiple photos) */}
       {showProductForm && (

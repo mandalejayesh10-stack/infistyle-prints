@@ -7,6 +7,7 @@ import { Canvas, IText, Rect, Circle, Triangle, Polygon, FabricImage } from 'fab
 import QRCode from 'qrcode';
 import { jsPDF } from 'jspdf';
 import { getProductBySlug } from '@/lib/catalog';
+import { syncCartToBackend } from '@/lib/cart-sync';
 import { 
   ArrowLeft, Type, Image as ImageIcon, Shapes, Sparkles, Check, 
   RefreshCw, RotateCw, ZoomIn, ZoomOut, Download, AlertCircle, ShoppingCart, 
@@ -453,6 +454,7 @@ export default function CanvasEditorClient() {
     const cart = existing ? JSON.parse(existing) : [];
     cart.push(cartItem);
     localStorage.setItem('infistyle_cart', JSON.stringify(cart));
+    syncCartToBackend(cart);
 
     setCheckoutOpen(false);
     setToastMessage('Item added to cart!');

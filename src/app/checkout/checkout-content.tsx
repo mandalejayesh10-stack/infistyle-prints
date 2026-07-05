@@ -8,6 +8,7 @@ import confetti from 'canvas-confetti';
 import { api } from '@/lib/aws/api';
 import { cognitoClient } from '@/lib/aws/client';
 import { getProductBySlug } from '@/lib/catalog';
+import { syncCartToBackend } from '@/lib/cart-sync';
 import { 
   MapPin, ShieldCheck, CreditCard, ChevronRight, HelpCircle, Check,
   AlertCircle, Tag, ArrowRight, Truck, Info, Phone
@@ -275,6 +276,7 @@ export default function CheckoutContent() {
       if (paymentMethod === 'cod') {
         confetti({ particleCount: 150, spread: 80 });
         localStorage.removeItem('infistyle_cart');
+        syncCartToBackend([]);
         window.dispatchEvent(new Event('storage'));
         
         setToastMessage(`COD Order Placed Successfully! Order ID: ${orderId.slice(0,8).toUpperCase()}`);
@@ -294,6 +296,7 @@ export default function CheckoutContent() {
             // Confirm transaction success (updates DynamoDB status on Hono)
             confetti({ particleCount: 150, spread: 80 });
             localStorage.removeItem('infistyle_cart');
+            syncCartToBackend([]);
             window.dispatchEvent(new Event('storage'));
 
             setToastMessage(`Online Payment Successful! Order ID: ${orderId.slice(0,8).toUpperCase()}`);

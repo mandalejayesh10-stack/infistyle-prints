@@ -127,6 +127,49 @@ app.delete('/catalog/products/:slug', authMiddleware, adminMiddleware, async (c)
 });
 
 // ----------------------------------------------------
+// 1.5. LIVE SHOPPING CART ENDPOINTS
+// ----------------------------------------------------
+
+// Sync/Save user cart
+app.post('/cart', async (c) => {
+  try {
+    const body = await c.req.json();
+    const { userId, userEmail, userName, items } = body;
+
+    if (!userId) {
+      return c.json({ error: 'userId is required' }, 400);
+    }
+
+    const cartItem = {
+      PK: `CART#${userId}`,
+      SK: 'METADATA',
+      userId,
+      userEmail: userEmail || 'Guest',
+      userName: userName || 'Guest Customer',
+      items: items || [],
+      updatedAt: new Date().toISOString(),
+    };
+
+    await db.put(cartItem);
+    return c.json({ success: true });
+  } catch (err: any) {
+    return c.json({ error: 'Failed to sync cart: ' + err.message }, 500);
+  }
+});
+
+// Get all active carts (Admin only)
+app.get('/admin/carts', authMiddleware, adminMiddleware, async (c) => {
+  try {
+    const allItems = await db.scan();
+    // Filter active carts where items array is not empty
+    const carts = allItems.filter(item => item.PK.startsWith('CART#') && item.SK === 'METADATA' && Array.isArray(item.items) && item.items.length > 0);
+    return c.json({ carts });
+  } catch (err: any) {
+    return c.json({ error: 'Failed to fetch active carts: ' + err.message }, 500);
+  }
+});
+
+// ----------------------------------------------------
 // 2. USER DESIGNS ENDPOINTS
 // ----------------------------------------------------
 
