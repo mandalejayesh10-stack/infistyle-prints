@@ -122,7 +122,7 @@ export default function HomeHeroSlider() {
 
   return (
     <section 
-      className="relative overflow-hidden w-full h-[650px] lg:h-[550px] border-b-2 border-primary select-none"
+      className="relative overflow-hidden w-full h-[880px] sm:h-[980px] lg:h-[550px] border-b-2 border-primary select-none"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onTouchStart={handleTouchStart}
@@ -197,8 +197,8 @@ export default function HomeHeroSlider() {
                 </div>
 
                 {/* 2. Right Mockup Card Area */}
-                <div className="lg:col-span-5 relative hidden lg:flex items-center justify-center h-[350px] lg:h-[400px]">
-                  <div className="relative group w-80 h-[380px] bg-white border-4 border-primary shadow-2xl overflow-hidden transition-all duration-300 hover:rotate-0 hover:scale-105">
+                <div className="lg:col-span-5 relative flex items-center justify-center h-[260px] sm:h-[350px] lg:h-[400px] mt-6 lg:mt-0">
+                  <div className="relative group w-56 h-[240px] sm:w-80 sm:h-[330px] lg:w-80 lg:h-[380px] bg-white border-4 border-primary shadow-2xl overflow-hidden transition-all duration-300 hover:rotate-0 hover:scale-105">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={slide.image}
@@ -208,8 +208,8 @@ export default function HomeHeroSlider() {
                   </div>
 
                   {/* Backdrop decoration */}
-                  <div className="absolute -top-6 -right-6 w-64 h-64 rounded-full bg-primary/10 -z-10 blur-xl"></div>
-                  <div className="absolute -bottom-6 -left-6 w-64 h-64 rounded-full bg-primary/10 -z-10 blur-xl"></div>
+                  <div className="absolute -top-6 -right-6 w-48 h-48 sm:w-64 sm:h-64 rounded-full bg-primary/10 -z-10 blur-xl"></div>
+                  <div className="absolute -bottom-6 -left-6 w-48 h-48 sm:w-64 sm:h-64 rounded-full bg-primary/10 -z-10 blur-xl"></div>
                 </div>
 
               </div>
