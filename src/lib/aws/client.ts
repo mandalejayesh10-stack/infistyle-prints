@@ -67,7 +67,8 @@ export const cognitoClient = {
       localStorage.setItem('infistyle_refresh_token', authResult.RefreshToken);
       
       // Save ID Token in document cookie for Next.js Middleware checks
-      document.cookie = `infistyle_session=${authResult.IdToken}; path=/; max-age=${authResult.ExpiresIn}; SameSite=Lax; Secure`;
+      const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+      document.cookie = `infistyle_session=${authResult.IdToken}; path=/; max-age=${authResult.ExpiresIn}; SameSite=Lax${isHttps ? '; Secure' : ''}`;
     }
     return authResult;
   },

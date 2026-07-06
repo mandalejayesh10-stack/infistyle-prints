@@ -298,7 +298,6 @@ export default function AdminDashboard() {
 
       } catch (err) {
         console.error('Error fetching admin dashboard details:', err);
-        router.push('/');
       }
       setLoading(false);
     };
