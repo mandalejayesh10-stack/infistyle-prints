@@ -122,7 +122,7 @@ export default function HomeHeroSlider() {
 
   return (
     <section 
-      className="relative overflow-hidden w-full h-[740px] sm:h-[840px] lg:h-[550px] border-b-2 border-primary select-none"
+      className="relative overflow-hidden w-full min-h-[620px] md:h-[550px] border-b-2 border-primary select-none flex items-center"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onTouchStart={handleTouchStart}
@@ -140,11 +140,11 @@ export default function HomeHeroSlider() {
                 isActive ? 'opacity-100 z-10 translate-x-0' : 'opacity-0 z-0 translate-x-8 pointer-events-none'
               }`}
             >
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center py-8 lg:py-12">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex flex-col md:flex-row items-center justify-between gap-8 py-8 md:py-0 h-full">
                 
                 {/* 1. Left Content Area */}
-                <div className="lg:col-span-7 space-y-4 lg:space-y-6 text-center lg:text-left flex flex-col justify-center h-full">
-                  <div className={`inline-flex items-center gap-1.5 self-center lg:self-start px-3 py-1 rounded-full border-2 ${
+                <div className="w-full md:w-7/12 space-y-4 md:space-y-6 text-center md:text-left flex flex-col justify-center">
+                  <div className={`inline-flex items-center gap-1.5 self-center md:self-start px-3 py-1 rounded-full border-2 ${
                     slide.isDark ? 'border-primary bg-primary/10 text-primary' : 'border-primary bg-white text-dark-charcoal'
                   } text-[10px] font-black tracking-wider uppercase`}>
                     <Sparkles className="h-3.5 w-3.5 animate-pulse" />
@@ -157,18 +157,6 @@ export default function HomeHeroSlider() {
                       {slide.subtitle}
                     </span>
                   </h1>
-
-                  {/* Mobile-only Mockup Image (hidden on desktop, shown on mobile above the fold) */}
-                  <div className="lg:hidden flex justify-center py-3">
-                    <div className="relative group w-48 h-[200px] sm:w-64 sm:h-[270px] bg-white border-4 border-primary shadow-xl overflow-hidden rounded-xl">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={slide.image}
-                        alt={slide.subtitle}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
 
                   <p className={`text-base font-bold uppercase tracking-wider ${slide.isDark ? 'text-yellow-400' : 'text-dark-charcoal'}`}>
                     Pricing: {slide.price}
@@ -187,7 +175,7 @@ export default function HomeHeroSlider() {
                     ))}
                   </ul>
 
-                  <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+                  <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4 pt-2">
                     <Link 
                       href={slide.ctaLink} 
                       className="w-full sm:w-auto btn-primary py-3.5 px-8 text-sm font-black tracking-wider uppercase shadow-md hover:shadow-lg flex items-center justify-center gap-2"
@@ -208,9 +196,9 @@ export default function HomeHeroSlider() {
                   </div>
                 </div>
 
-                {/* 2. Right Mockup Card Area (desktop only) */}
-                <div className="lg:col-span-5 relative hidden lg:flex items-center justify-center h-[400px]">
-                  <div className="relative group w-80 h-[380px] bg-white border-4 border-primary shadow-2xl overflow-hidden transition-all duration-300 hover:rotate-0 hover:scale-105">
+                {/* 2. Mockup Card Area */}
+                <div className="w-full md:w-5/12 relative flex items-center justify-center h-[260px] sm:h-[350px] md:h-[400px] mt-6 md:mt-0">
+                  <div className="relative group w-56 h-[240px] sm:w-80 sm:h-[330px] md:w-80 md:h-[380px] bg-white border-4 border-primary shadow-2xl overflow-hidden transition-all duration-300 hover:rotate-0 hover:scale-105 rounded-xl">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={slide.image}
@@ -220,10 +208,9 @@ export default function HomeHeroSlider() {
                   </div>
 
                   {/* Backdrop decoration */}
-                  <div className="absolute -top-6 -right-6 w-64 h-64 rounded-full bg-primary/10 -z-10 blur-xl"></div>
-                  <div className="absolute -bottom-6 -left-6 w-64 h-64 rounded-full bg-primary/10 -z-10 blur-xl"></div>
+                  <div className="absolute -top-6 -right-6 w-48 h-48 sm:w-64 sm:h-64 rounded-full bg-primary/10 -z-10 blur-xl"></div>
+                  <div className="absolute -bottom-6 -left-6 w-48 h-48 sm:w-64 sm:h-64 rounded-full bg-primary/10 -z-10 blur-xl"></div>
                 </div>
-
               </div>
             </div>
           );
