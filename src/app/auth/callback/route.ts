@@ -34,8 +34,16 @@ export async function GET(request: Request) {
       }
 
       if (data.id_token) {
+        let targetPath = next;
+        try {
+          const payload = JSON.parse(Buffer.from(data.id_token.split('.')[1], 'base64').toString());
+          if (payload.email?.toLowerCase() === 'admin@infistyle.com') {
+            targetPath = '/admin';
+          }
+        } catch (_) {}
+
         // Construct standard Next.js Response redirect
-        const url = new URL(next, origin);
+        const url = new URL(targetPath, origin);
         const res = NextResponse.redirect(url);
         
         // Save the ID token in cookie for the middleware

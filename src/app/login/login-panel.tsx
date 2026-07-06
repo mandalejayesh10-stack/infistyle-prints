@@ -70,7 +70,11 @@ export default function LoginPanel() {
     try {
       if (authMode === 'login') {
         await cognitoClient.signIn(email, password);
-        window.location.href = next;
+        if (email.toLowerCase() === 'admin@infistyle.com') {
+          window.location.href = '/admin';
+        } else {
+          window.location.href = next;
+        }
       } else {
         await cognitoClient.signUp(email, password, name || 'Customer');
         setShowVerification(true);
