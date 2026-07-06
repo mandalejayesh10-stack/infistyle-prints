@@ -63,18 +63,18 @@ export default function DashboardContent() {
     const fetchUserData = async () => {
       setLoading(true);
 
-      const accessToken = localStorage.getItem('infistyle_access_token');
-      if (!accessToken) {
+      const activeUser = cognitoClient.getSessionUserSync();
+      if (!activeUser) {
         setProjects(MOCK_PROJECTS);
         setOrders(MOCK_ORDERS);
         setLoading(false);
         return;
       }
 
+      setUser({ id: activeUser.username, email: activeUser.email, name: activeUser.name });
+      setProfile({ name: activeUser.name, email: activeUser.email });
+
       try {
-        const cognitoUser = await cognitoClient.getUser(accessToken);
-        setUser({ id: cognitoUser.username, email: cognitoUser.email, name: cognitoUser.name });
-        setProfile({ name: cognitoUser.name, email: cognitoUser.email });
 
         // 1. Fetch user designs from Hono REST API
         const designsRes = await api.getDesigns();
@@ -670,7 +670,7 @@ export default function DashboardContent() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-bold text-gray-600">
                       <div>
                         <span className="text-[9px] font-black text-gray-400 block uppercase">Full Name</span>
-                        <span className="text-dark-charcoal text-sm font-black">{profile?.name || user?.user_metadata?.full_name || 'Guest User'}</span>
+                        <span className="text-dark-charcoal text-sm font-black">{profile?.name || user?.name || user?.email?.split('@')[0] || 'Customer'}</span>
                       </div>
                       <div>
                         <span className="text-[9px] font-black text-gray-400 block uppercase">Email Address</span>

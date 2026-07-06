@@ -1,7 +1,18 @@
 const API_BASE = '/api';
 
 async function request(path: string, options: RequestInit = {}) {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('infistyle_id_token') : null;
+  const getCookie = (name: string): string | null => {
+    if (typeof document === 'undefined') return null;
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+      if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+  };
+  const token = typeof window !== 'undefined' ? (localStorage.getItem('infistyle_id_token') || getCookie('infistyle_session')) : null;
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',

@@ -20,16 +20,10 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   useEffect(() => {
-    const checkCognitoUser = async () => {
-      const accessToken = localStorage.getItem('infistyle_access_token');
-      if (accessToken) {
-        try {
-          const cognitoUser = await cognitoClient.getUser(accessToken);
-          setUser({ id: cognitoUser.username, email: cognitoUser.email, user_metadata: { full_name: cognitoUser.name } } as any);
-        } catch (err) {
-          console.error('Error fetching cognito session:', err);
-          setUser(null);
-        }
+    const checkCognitoUser = () => {
+      const activeUser = cognitoClient.getSessionUserSync();
+      if (activeUser) {
+        setUser({ id: activeUser.username, email: activeUser.email, user_metadata: { full_name: activeUser.name } } as any);
       } else {
         setUser(null);
       }

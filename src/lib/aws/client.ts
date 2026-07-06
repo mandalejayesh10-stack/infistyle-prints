@@ -89,7 +89,59 @@ export const cognitoClient = {
     };
   },
 
-  // 5. Sign Out
+  // 5. Get Current Session User Sync (decodes client-side JWT token and syncs cookie to localStorage)
+  getSessionUserSync(): CognitoUser | null {
+    if (typeof window === 'undefined') return null;
+
+    // Helper to get cookie
+    const getCookie = (name: string): string | null => {
+      const nameEQ = name + "=";
+      const ca = document.cookie.split(';');
+      for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+      }
+      return null;
+    };
+
+    // Helper to decode JWT payload
+    const parseJwt = (token: string) => {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+          window.atob(base64)
+            .split('')
+            .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+            .join('')
+        );
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        return null;
+      }
+    };
+
+    const token = getCookie('infistyle_session') || localStorage.getItem('infistyle_id_token') || localStorage.getItem('infistyle_access_token');
+    if (!token) return null;
+
+    const decoded = parseJwt(token);
+    if (!decoded) return null;
+
+    // Sync back to localStorage for other client workflows
+    if (!localStorage.getItem('infistyle_id_token')) {
+      localStorage.setItem('infistyle_id_token', token);
+      localStorage.setItem('infistyle_access_token', token);
+    }
+
+    return {
+      username: decoded.sub || decoded.email || 'customer',
+      email: decoded.email || '',
+      name: decoded.name || decoded.email?.split('@')[0] || 'Customer',
+    };
+  },
+
+  // 6. Sign Out
   signOut() {
     localStorage.removeItem('infistyle_access_token');
     localStorage.removeItem('infistyle_id_token');
