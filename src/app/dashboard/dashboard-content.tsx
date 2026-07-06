@@ -7,7 +7,7 @@ import { api } from '@/lib/aws/api';
 import { cognitoClient } from '@/lib/aws/client';
 import { 
   User, Briefcase, Heart, ShoppingBag, Eye, Settings, 
-  MapPin, LogOut, CheckCircle, Clock, Truck, ShieldAlert, Sparkles, RefreshCw
+  MapPin, LogOut, CheckCircle, Clock, Truck, ShieldAlert, Sparkles, RefreshCw, LayoutDashboard
 } from 'lucide-react';
 
 interface Project {
@@ -49,7 +49,7 @@ export default function DashboardContent() {
   const router = useRouter();
 
 
-  const currentTab = searchParams?.get('tab') || 'projects';
+  const currentTab = searchParams?.get('tab') || 'overview';
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -259,6 +259,7 @@ export default function DashboardContent() {
         <div className="lg:col-span-3 space-y-4">
           <div className="brand-card p-5 space-y-2.5">
             {[
+              { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
               { id: 'projects', label: 'My Projects', icon: Briefcase },
               { id: 'orders', label: 'Order History', icon: ShoppingBag },
               { id: 'favourites', label: 'Favourites', icon: Heart },
@@ -302,6 +303,226 @@ export default function DashboardContent() {
           ) : (
             <div className="space-y-6">
               
+              {/* Tab: Overview */}
+              {currentTab === 'overview' && (
+                <div className="space-y-8">
+                  {/* Welcome Greeting */}
+                  <div className="text-left">
+                    <h2 className="text-3xl font-black text-dark-charcoal tracking-tight">
+                      Hello, {user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Customer'}.
+                    </h2>
+                    <p className="text-xs text-gray-500 font-semibold mt-1">
+                      Here's what's going on in your account.
+                    </p>
+                  </div>
+
+                  {/* Snapshot Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="brand-card p-6 flex flex-col justify-between h-36">
+                      <div>
+                        <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest text-left">Account Snapshot</h4>
+                        <p className="text-3xl font-black text-dark-charcoal mt-2 text-left">{projects.length} Print Projects</p>
+                      </div>
+                      <button 
+                        onClick={() => handleTabChange('projects')} 
+                        className="text-xs font-bold text-primary text-left hover:underline"
+                      >
+                        View saved projects
+                      </button>
+                    </div>
+
+                    <div className="brand-card p-6 flex flex-col justify-between h-36">
+                      <div>
+                        <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest text-left">Brand Kits</h4>
+                        <p className="text-xl font-black text-dark-charcoal mt-3 text-left">Create your Brand Kit</p>
+                      </div>
+                      <a 
+                        href="#brand-kit" 
+                        className="text-xs font-bold text-primary text-left hover:underline"
+                      >
+                        Get customized recommendations
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Orders Summary */}
+                  <div className="brand-card p-6 text-left">
+                    <h3 className="text-sm font-black text-dark-charcoal uppercase tracking-wider mb-4">Orders</h3>
+                    {orders.length === 0 ? (
+                      <div className="space-y-4">
+                        <p className="text-xs text-gray-500 font-semibold">
+                          You don't have any orders yet. When you've placed your first order, you'll see it here.
+                        </p>
+                        <Link href="/catalog" className="inline-block btn-primary text-xs py-2 px-6 font-bold uppercase tracking-wider">
+                          Continue Shopping
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-yellow-50">
+                        {orders.slice(0, 1).map((ord) => (
+                          <div key={ord.id} className="pt-2 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div className="flex gap-4 items-center">
+                              <div className="h-12 w-12 bg-yellow-50 rounded-lg overflow-hidden border border-primary/20 flex-shrink-0">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={ord.thumbnail} alt={ord.productName} className="w-full h-full object-cover" />
+                              </div>
+                              <div>
+                                <h4 className="font-extrabold text-xs text-dark-charcoal">{ord.productName}</h4>
+                                <p className="text-[10px] text-gray-400 font-semibold mt-0.5">Order ID: {ord.id.toUpperCase()} • Qty: {ord.qty}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4 w-full sm:w-auto justify-between">
+                              <span className="font-black text-xs text-primary">₹{ord.total.toFixed(2)}</span>
+                              {getStatusBadge(ord.status)}
+                            </div>
+                          </div>
+                        ))}
+                        <div className="pt-4 text-left">
+                          <button onClick={() => handleTabChange('orders')} className="text-xs font-bold text-primary hover:underline">
+                            View all order history
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Latest Projects */}
+                  <div className="space-y-4 text-left">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-sm font-black text-dark-charcoal uppercase tracking-wider">Latest Projects</h3>
+                      <button onClick={() => handleTabChange('projects')} className="text-xs font-bold text-primary hover:underline">
+                        View all
+                      </button>
+                    </div>
+                    {displayProjects.length === 0 ? (
+                      <p className="text-xs text-gray-500 font-semibold italic">No projects saved yet.</p>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                        {displayProjects.slice(0, 4).map((proj) => (
+                          <div key={proj.id} className="brand-card p-3 space-y-3 flex flex-col justify-between">
+                            <div className="aspect-square bg-yellow-50 rounded-lg overflow-hidden border border-primary/20 flex-shrink-0">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={proj.thumbnail} alt={proj.name} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="space-y-1">
+                              <h4 className="font-extrabold text-[10px] sm:text-xs text-dark-charcoal truncate">{proj.name}</h4>
+                              <p className="text-[9px] text-gray-400 font-semibold">Saved: {proj.date}</p>
+                            </div>
+                            <Link href={`/editor/${proj.slug}`} className="block text-center btn-primary text-[9px] sm:text-[10px] py-1.5 w-full font-bold">
+                              Edit
+                            </Link>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Personalise recommendations section */}
+                  <div id="brand-kit" className="brand-card p-6 scroll-mt-6 text-left">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                      {/* Left: Input details */}
+                      <div className="lg:col-span-6 space-y-4">
+                        <h3 className="text-sm font-black text-dark-charcoal uppercase tracking-wider">Personalise your recommendations</h3>
+                        <p className="text-xs text-neutral-500 font-semibold leading-relaxed">
+                          Create a Brand Kit to keep track of your logo, colours, fonts and more. Get recommendations based on your brand and style across Infistyle.
+                        </p>
+                        
+                        <div className="space-y-3 pt-2">
+                          <div>
+                            <label className="block text-[10px] font-black text-dark-charcoal uppercase tracking-widest mb-1.5">Business Name</label>
+                            <input 
+                              type="text" 
+                              placeholder="Business name" 
+                              className="w-full px-3 py-2 border-2 border-primary rounded focus:outline-none text-xs font-semibold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-black text-dark-charcoal uppercase tracking-widest mb-1.5">Logo</label>
+                            <div className="border-2 border-dashed border-primary/30 rounded p-4 text-center cursor-pointer hover:bg-yellow-50/20 transition-all flex flex-col items-center justify-center gap-1.5">
+                              <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                <Sparkles className="h-4.5 w-4.5" />
+                              </div>
+                              <span className="text-[10px] font-black text-dark-charcoal uppercase tracking-wider">Upload or choose logo</span>
+                            </div>
+                          </div>
+
+                          <button className="btn-primary text-xs py-2 px-6 font-bold uppercase tracking-wider">
+                            Create Brand Kit
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Right: Mockups display */}
+                      <div className="lg:col-span-6 grid grid-cols-2 gap-4">
+                        <div className="aspect-square bg-slate-50 border border-neutral-100 rounded-2xl overflow-hidden p-3 flex flex-col justify-center items-center text-center relative group">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img 
+                            src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=300&q=80" 
+                            alt="Branded Mug" 
+                            className="w-4/5 h-4/5 object-contain"
+                          />
+                          <div className="absolute inset-0 bg-dark-charcoal/5 backdrop-blur-[0.5px] flex items-center justify-center p-4">
+                            <span className="text-[8px] sm:text-[9px] font-black tracking-widest bg-white/95 text-dark-charcoal py-1.5 px-3 border border-primary/30 rounded uppercase shadow-sm">
+                              Your Logo Here
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="aspect-square bg-slate-50 border border-neutral-100 rounded-2xl overflow-hidden p-3 flex flex-col justify-center items-center text-center relative group">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img 
+                            src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=300&q=80" 
+                            alt="Branded Business Card" 
+                            className="w-4/5 h-4/5 object-contain"
+                          />
+                          <div className="absolute inset-0 bg-dark-charcoal/5 backdrop-blur-[0.5px] flex items-center justify-center p-4">
+                            <span className="text-[8px] sm:text-[9px] font-black tracking-widest bg-white/95 text-dark-charcoal py-1.5 px-3 border border-primary/30 rounded uppercase shadow-sm">
+                              Your Logo Here
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recommended for you */}
+                  <div className="space-y-4 text-left">
+                    <h3 className="text-sm font-black text-dark-charcoal uppercase tracking-wider">Recommended for you</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                      {[
+                        { name: 'Custom Bookmarks', price: 'From ₹32.00 each', qty: '5 units', image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=250&q=80', slug: 'bookmarks' },
+                        { name: 'Dutees Pocket Polo T-Shirts', price: '₹825.00 - ₹990.00 each', qty: '1 unit', image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=250&q=80', slug: 'mens-polo' },
+                        { name: 'Keychain with Light', price: 'From ₹250.00 each', qty: '1 unit', image: 'https://images.unsplash.com/photo-1582139329536-e7284fece509?auto=format&fit=crop&w=250&q=80', slug: 'keychains' },
+                        { name: 'Green with Silver Ball Pens', price: '₹40.00 - ₹55.00 each', qty: 'Minimum quantity 5', image: 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?auto=format&fit=crop&w=250&q=80', slug: 'pens' }
+                      ].map((prod, index) => (
+                        <div key={index} className="brand-card p-4 space-y-4 flex flex-col justify-between relative group">
+                          <button className="absolute top-3.5 right-3.5 h-7 w-7 rounded-full bg-white/90 border border-neutral-100 flex items-center justify-center text-neutral-400 hover:text-red-500 transition-colors shadow-sm">
+                            <Heart className="h-4 w-4" />
+                          </button>
+                          
+                          <div className="aspect-square bg-slate-50 rounded-xl overflow-hidden flex items-center justify-center p-2">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={prod.image} alt={prod.name} className="w-full h-full object-cover rounded-lg" />
+                          </div>
+
+                          <div className="space-y-1 text-left">
+                            <h4 className="font-extrabold text-xs text-dark-charcoal line-clamp-2 leading-tight min-h-[32px]">{prod.name}</h4>
+                            <p className="text-[10px] text-primary font-black">{prod.price}</p>
+                            <p className="text-[9px] text-gray-400 font-semibold">{prod.qty}</p>
+                          </div>
+
+                          <Link href={`/product/${prod.slug}`} className="w-full text-center btn-primary text-[10px] py-2 font-bold uppercase tracking-wider">
+                            Edit Design
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
               {/* Tab: Projects */}
               {currentTab === 'projects' && (
                 <div className="space-y-4">
