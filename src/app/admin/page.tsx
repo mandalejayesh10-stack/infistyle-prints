@@ -18,6 +18,7 @@ interface AdminOrder {
   id: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string;
   date: string;
   total: number;
   status: 'received' | 'printing' | 'shipped' | 'delivered';
@@ -109,8 +110,9 @@ export default function AdminDashboard() {
             apiOrders = stats.orders.map((o: any) => ({
               id: o.orderId,
               userId: o.PK.replace('USER#', ''),
-              customerName: o.userName || 'Guest Customer',
-              customerEmail: o.userEmail || 'N/A',
+              customerName: o.shippingAddress?.name || o.userName || 'Guest Customer',
+              customerEmail: o.shippingAddress?.email || o.userEmail || 'N/A',
+              customerPhone: o.shippingAddress?.phone || 'N/A',
               date: new Date(o.createdAt).toISOString().split('T')[0],
               total: Number(o.totalAmount),
               status: o.orderStatus.toLowerCase() as any,
@@ -136,6 +138,7 @@ export default function AdminDashboard() {
               userId: o.userId || 'GUEST-LOCAL',
               customerName: o.shippingAddress?.name || `${o.shippingAddress?.firstName || ''} ${o.shippingAddress?.lastName || ''}`.trim() || 'Local Customer',
               customerEmail: o.shippingAddress?.email || 'local@example.com',
+              customerPhone: o.shippingAddress?.phone || 'N/A',
               date: new Date(o.createdAt || Date.now()).toISOString().split('T')[0],
               total: Number(o.total || 0),
               status: (o.orderStatus || 'pending').toLowerCase() as any,
@@ -893,6 +896,8 @@ export default function AdminDashboard() {
                 <div className="text-xs font-bold text-gray-600 space-y-1">
                   <p className="font-black text-dark-charcoal">Order: {selectedOrder.id.toUpperCase()}</p>
                   <p>Customer: {selectedOrder.customerName}</p>
+                  <p>Email: <span className="text-primary font-bold">{selectedOrder.customerEmail}</span></p>
+                  <p>Phone: <span className="text-dark-charcoal font-black">{selectedOrder.customerPhone || 'N/A'}</span></p>
                   <p className="line-clamp-2">Address: {selectedOrder.address}</p>
                 </div>
 

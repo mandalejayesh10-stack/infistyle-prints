@@ -15,7 +15,7 @@ export async function syncCartToBackend(items: any[]) {
   if (typeof window === 'undefined') return;
 
   try {
-    const token = localStorage.getItem('infistyle_access_token');
+    const token = localStorage.getItem('infistyle_id_token');
     let userId = '';
     let userEmail = 'Guest';
     let userName = 'Guest Customer';
@@ -23,7 +23,7 @@ export async function syncCartToBackend(items: any[]) {
     if (token) {
       const claims = parseJwt(token);
       if (claims) {
-        userId = claims.sub || '';
+        userId = claims.sub || claims['cognito:username'] || '';
         userEmail = claims.email || 'Guest';
         userName = claims.name || claims.email || 'Guest Customer';
       }

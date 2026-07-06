@@ -254,6 +254,8 @@ export default function CheckoutContent() {
         paymentMethod: paymentMethod === 'cod' ? 'COD' : 'RAZORPAY',
         shippingAddress: {
           name: `${firstName} ${lastName}`,
+          phone: phone,
+          email: user?.email || '',
           line1: addressSearch,
           city,
           state,

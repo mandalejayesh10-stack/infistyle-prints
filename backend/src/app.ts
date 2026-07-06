@@ -30,7 +30,7 @@ app.get('/catalog', async (c) => {
     const categoriesMap: Record<string, any> = {};
 
     for (const item of items) {
-      const categorySlug = item.SK.replace('CATEGORY#', '');
+      const categorySlug = item.PK.replace('CATEGORY#', '');
       categoriesMap[categorySlug] = {
         name: item.name,
         slug: categorySlug,
