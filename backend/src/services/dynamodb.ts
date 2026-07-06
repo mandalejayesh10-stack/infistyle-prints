@@ -62,12 +62,14 @@ export const db = {
   },
 
   async queryGSI1(gsi1Pk: string, gsi1SkPrefix?: string) {
-    let keyConditionExpression = 'GSI1-PK = :gsi1Pk';
+    let keyConditionExpression = '#gsi1Pk = :gsi1Pk';
     const expressionAttributeValues: Record<string, any> = { ':gsi1Pk': gsi1Pk };
+    const expressionAttributeNames: Record<string, string> = { '#gsi1Pk': 'GSI1-PK' };
 
     if (gsi1SkPrefix) {
-      keyConditionExpression += ' AND begins_with(GSI1-SK, :gsi1SkPrefix)';
+      keyConditionExpression += ' AND begins_with(#gsi1Sk, :gsi1SkPrefix)';
       expressionAttributeValues[':gsi1SkPrefix'] = gsi1SkPrefix;
+      expressionAttributeNames['#gsi1Sk'] = 'GSI1-SK';
     }
 
     const response = await ddbDocClient.send(
@@ -76,6 +78,7 @@ export const db = {
         IndexName: 'GSI1',
         KeyConditionExpression: keyConditionExpression,
         ExpressionAttributeValues: expressionAttributeValues,
+        ExpressionAttributeNames: expressionAttributeNames,
       })
     );
     return response.Items || [];

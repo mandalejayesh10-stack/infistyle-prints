@@ -50,6 +50,13 @@ export class InfistyleCdkStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
+    // Configure Hosted UI Domain for Federated OAuth redirect handling
+    userPool.addDomain('CognitoDomain', {
+      cognitoDomain: {
+        domainPrefix: `infistyle-prints-${this.account}`,
+      },
+    });
+
     // User Pool Client for Frontend Apps
     const userPoolClient = new cognito.UserPoolClient(this, 'InfistyleUserPoolClient', {
       userPool: userPool,
@@ -158,6 +165,7 @@ export class InfistyleCdkStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'DynamoDBTableName', { value: singleTable.tableName });
     new cdk.CfnOutput(this, 'UserPoolId', { value: userPool.userPoolId });
     new cdk.CfnOutput(this, 'UserPoolClientId', { value: userPoolClient.userPoolClientId });
+    new cdk.CfnOutput(this, 'UserPoolDomain', { value: `infistyle-prints-${this.account}` });
     new cdk.CfnOutput(this, 'PublicAssetsBucketName', { value: publicAssetsBucket.bucketName });
     new cdk.CfnOutput(this, 'UserUploadsBucketName', { value: userUploadsBucket.bucketName });
     new cdk.CfnOutput(this, 'HonoBackendUrl', { value: functionUrl.url });
