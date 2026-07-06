@@ -75,16 +75,12 @@ export default function CheckoutContent() {
     setMounted(true);
     
     // Check if user session exists in Cognito
-    const accessToken = localStorage.getItem('infistyle_access_token');
-    if (accessToken) {
-      cognitoClient.getUser(accessToken).then((cognitoUser) => {
-        setUser({ id: cognitoUser.username, email: cognitoUser.email, name: cognitoUser.name });
-        const names = (cognitoUser.name || '').split(' ');
-        setFirstName(names[0] || '');
-        setLastName(names.slice(1).join(' ') || '');
-      }).catch((err) => {
-        console.error('Error fetching Cognito user:', err);
-      });
+    const activeUser = cognitoClient.getSessionUserSync();
+    if (activeUser) {
+      setUser({ id: activeUser.username, email: activeUser.email, name: activeUser.name });
+      const names = (activeUser.name || '').split(' ');
+      setFirstName(names[0] || '');
+      setLastName(names.slice(1).join(' ') || '');
     }
 
     const stored = localStorage.getItem('infistyle_cart');

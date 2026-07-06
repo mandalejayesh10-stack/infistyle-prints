@@ -91,17 +91,15 @@ export default function AdminDashboard() {
       setLoading(true);
       
       const accessToken = localStorage.getItem('infistyle_access_token');
-      if (!accessToken) {
+      const activeUser = cognitoClient.getSessionUserSync();
+      const isBypass = accessToken ? accessToken.startsWith('header.') : false;
+
+      if (!activeUser && !isBypass) {
         router.push('/login?next=/admin');
         return;
       }
 
-      const isBypass = accessToken.startsWith('header.');
-
       try {
-        if (!isBypass) {
-          await cognitoClient.getUser(accessToken);
-        }
 
         // Fetch stats & orders from Hono API with fallback
         let apiOrders: AdminOrder[] = [];
