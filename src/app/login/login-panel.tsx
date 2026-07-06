@@ -51,10 +51,10 @@ export default function LoginPanel() {
     const domain = process.env.NEXT_PUBLIC_COGNITO_DOMAIN || 'infistyle';
     const region = process.env.NEXT_PUBLIC_AWS_REGION || 'ap-south-1';
     const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID || '';
-    const redirectUri = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+    const redirectUri = `${window.location.origin}/auth/callback`;
     
     // Redirect browser to Cognito Hosted OAuth2 authorize endpoint for Google Sign-in
-    window.location.href = `https://${domain}.auth.${region}.amazoncognito.com/oauth2/authorize?identity_provider=Google&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&client_id=${clientId}&scope=email+openid+profile`;
+    window.location.href = `https://${domain}.auth.${region}.amazoncognito.com/oauth2/authorize?identity_provider=Google&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&client_id=${clientId}&scope=email+openid+profile&state=${encodeURIComponent(next)}`;
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
