@@ -47,9 +47,9 @@ export default function AdminDashboard() {
   const router = useRouter();
 
 
-  const [orders, setOrders] = useState<AdminOrder[]>(MOCK_ADMIN_ORDERS);
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [productsList, setProductsList] = useState<ManageProduct[]>([]);
-  const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(MOCK_ADMIN_ORDERS[0]);
+  const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [productSearch, setProductSearch] = useState('');
   
@@ -151,43 +151,11 @@ export default function AdminDashboard() {
         }
 
         const combined = [...apiOrders, ...localOrders];
+        setOrders(combined);
         if (combined.length > 0) {
-          setOrders(combined);
           setSelectedOrder(combined[0]);
         } else {
-          // Set mock orders for testing if empty
-          const mockOrders = [
-            {
-              id: 'ord_mock101',
-              userId: 'dev-admin-id',
-              customerName: 'Jayesh Mandale',
-              customerEmail: 'jayesh@infistyle.com',
-              date: new Date().toISOString().split('T')[0],
-              total: 1299,
-              status: 'pending' as any,
-              paymentMethod: 'cod',
-              paymentStatus: 'pending',
-              lat: 18.975,
-              lng: 72.825,
-              address: 'Mumbai, Maharashtra, India'
-            },
-            {
-              id: 'ord_mock102',
-              userId: 'guest-user-id',
-              customerName: 'Aarav Sharma',
-              customerEmail: 'aarav@example.com',
-              date: new Date(Date.now() - 86400 * 1000).toISOString().split('T')[0],
-              total: 2450,
-              status: 'delivered' as any,
-              paymentMethod: 'razorpay',
-              paymentStatus: 'paid',
-              lat: 28.6139,
-              lng: 77.2090,
-              address: 'Connaught Place, New Delhi, India'
-            }
-          ];
-          setOrders(mockOrders);
-          setSelectedOrder(mockOrders[0]);
+          setSelectedOrder(null);
         }
 
         // Load catalog products from Hono API with fallback
@@ -250,50 +218,12 @@ export default function AdminDashboard() {
           const res = await api.getActiveCarts();
           if (res && res.carts) {
             setActiveCarts(res.carts);
+          } else {
+            setActiveCarts([]);
           }
         } catch (err) {
-          console.warn('Failed to load active carts, falling back to mock carts:', err);
-          // Set mock carts for testing
-          setActiveCarts([
-            {
-              userId: 'GUEST-K8S2X4',
-              userEmail: 'Guest',
-              userName: 'Guest (Mumbai)',
-              updatedAt: new Date().toISOString(),
-              items: [
-                {
-                  id: 'item_mock01',
-                  productName: 'Standard Visiting Cards',
-                  productSlug: 'standard-visiting-cards',
-                  qty: 200,
-                  finish: 'Standard Matte',
-                  corners: 'Square',
-                  speed: 'Standard',
-                  unitPrice: 2,
-                  thumbnail: '/ai_model_visiting_card.png'
-                }
-              ]
-            },
-            {
-              userId: 'USER-99B77',
-              userEmail: 'priya@example.com',
-              userName: 'Priya Patel',
-              updatedAt: new Date(Date.now() - 3600 * 1000).toISOString(),
-              items: [
-                {
-                  id: 'item_mock02',
-                  productName: 'Embroidered Polo Shirt',
-                  productSlug: 'mens-polo',
-                  qty: 100,
-                  finish: 'Premium Glossy',
-                  corners: 'Square',
-                  speed: 'Express',
-                  unitPrice: 5.9,
-                  thumbnail: '/ai_model_polo_tshirt.png'
-                }
-              ]
-            }
-          ]);
+          console.warn('Failed to load active carts:', err);
+          setActiveCarts([]);
         }
 
       } catch (err) {
