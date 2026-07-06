@@ -201,8 +201,8 @@ export default function DashboardContent() {
     router.push('/cart');
   };
 
-  const displayProjects = projects.length > 0 ? projects : MOCK_PROJECTS;
-  const displayOrders = orders.length > 0 ? orders : MOCK_ORDERS;
+  const displayProjects = projects;
+  const displayOrders = orders;
 
   // Status badges formatter
   const getStatusBadge = (status: Order['status']) => {
@@ -527,25 +527,34 @@ export default function DashboardContent() {
               {currentTab === 'projects' && (
                 <div className="space-y-4">
                   <h2 className="text-base font-black text-dark-charcoal uppercase tracking-wider mb-2">My Saved Projects</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {displayProjects.map((proj) => (
-                      <div key={proj.id} className="brand-card p-4 flex gap-4 items-center">
-                        <div className="h-16 w-16 bg-yellow-50 rounded-lg overflow-hidden border border-primary/20 flex-shrink-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={proj.thumbnail} alt={proj.name} className="w-full h-full object-cover" />
-                        </div>
-                        <div className="flex-grow min-w-0">
-                          <h3 className="font-extrabold text-sm text-dark-charcoal truncate">{proj.name}</h3>
-                          <p className="text-[10px] text-gray-400 font-semibold mt-0.5">Saved: {proj.date}</p>
-                          <div className="mt-3 flex gap-2">
-                            <Link href={`/editor/${proj.slug}`} className="btn-primary text-[10px] py-1 px-3">
-                              Edit Design
-                            </Link>
+                  {displayProjects.length === 0 ? (
+                    <div className="brand-card p-8 text-center space-y-3">
+                      <p className="text-sm text-gray-500 font-semibold">You don't have any saved projects yet.</p>
+                      <Link href="/catalog" className="inline-block btn-primary text-xs py-2 px-6 font-bold uppercase tracking-wider">
+                        Start Creating
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {displayProjects.map((proj) => (
+                        <div key={proj.id} className="brand-card p-4 flex gap-4 items-center">
+                          <div className="h-16 w-16 bg-yellow-50 rounded-lg overflow-hidden border border-primary/20 flex-shrink-0">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={proj.thumbnail} alt={proj.name} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-grow min-w-0">
+                            <h3 className="font-extrabold text-sm text-dark-charcoal truncate">{proj.name}</h3>
+                            <p className="text-[10px] text-gray-400 font-semibold mt-0.5">Saved: {proj.date}</p>
+                            <div className="mt-3 flex gap-2">
+                              <Link href={`/editor/${proj.slug}`} className="btn-primary text-[10px] py-1 px-3">
+                                Edit Design
+                              </Link>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -553,86 +562,95 @@ export default function DashboardContent() {
               {currentTab === 'orders' && (
                 <div className="space-y-4">
                   <h2 className="text-base font-black text-dark-charcoal uppercase tracking-wider mb-2">My Order History</h2>
-                  <div className="space-y-4">
-                    {displayOrders.map((ord) => (
-                      <div key={ord.id} className="brand-card p-5 space-y-4">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-yellow-50 pb-3">
-                          <div>
-                            <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest block">ORDER ID</span>
-                            <span className="font-black text-xs text-dark-charcoal">{ord.id.toUpperCase()}</span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest block">ORDER DATE</span>
-                            <span className="font-bold text-xs text-gray-600">{ord.date}</span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest block">PAYMENT METHOD</span>
-                            <span className="font-bold text-xs text-gray-600 uppercase">{ord.paymentMethod}</span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest block">TOTAL AMOUNT</span>
-                            <span className="font-black text-xs text-primary">₹{ord.total.toFixed(2)}</span>
-                          </div>
-                        </div>
-
-                        {/* Order Item Details */}
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                          <div className="flex gap-4 items-center">
-                            <div className="h-14 w-14 bg-yellow-50 rounded-lg overflow-hidden border border-primary/20 flex-shrink-0">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={ord.thumbnail} alt={ord.productName} className="w-full h-full object-cover" />
+                  {displayOrders.length === 0 ? (
+                    <div className="brand-card p-8 text-center space-y-3">
+                      <p className="text-sm text-gray-500 font-semibold">You don't have any orders yet.</p>
+                      <Link href="/catalog" className="inline-block btn-primary text-xs py-2 px-6 font-bold uppercase tracking-wider">
+                        Shop Now
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {displayOrders.map((ord) => (
+                        <div key={ord.id} className="brand-card p-5 space-y-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-yellow-50 pb-3">
+                            <div>
+                              <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest block">ORDER ID</span>
+                              <span className="font-black text-xs text-dark-charcoal">{ord.id.toUpperCase()}</span>
                             </div>
                             <div>
-                              <h3 className="font-extrabold text-xs text-dark-charcoal leading-tight">{ord.productName}</h3>
-                              <p className="text-[10px] text-gray-400 font-semibold mt-0.5">Quantity: {ord.qty} units</p>
+                              <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest block">ORDER DATE</span>
+                              <span className="font-bold text-xs text-gray-600">{ord.date}</span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest block">PAYMENT METHOD</span>
+                              <span className="font-bold text-xs text-gray-600 uppercase">{ord.paymentMethod}</span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest block">TOTAL AMOUNT</span>
+                              <span className="font-black text-xs text-primary">₹{ord.total.toFixed(2)}</span>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-4 w-full sm:w-auto justify-between border-t sm:border-0 border-yellow-50 pt-3 sm:pt-0">
-                            {getStatusBadge(ord.status)}
-                            <button
-                              onClick={() => handleReorder(ord)}
-                              className="btn-primary text-[10px] py-1 px-4"
-                            >
-                              Reorder
-                            </button>
+                          {/* Order Item Details */}
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div className="flex gap-4 items-center">
+                              <div className="h-14 w-14 bg-yellow-50 rounded-lg overflow-hidden border border-primary/20 flex-shrink-0">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={ord.thumbnail} alt={ord.productName} className="w-full h-full object-cover" />
+                              </div>
+                              <div>
+                                <h3 className="font-extrabold text-xs text-dark-charcoal leading-tight">{ord.productName}</h3>
+                                <p className="text-[10px] text-gray-400 font-semibold mt-0.5">Quantity: {ord.qty} units</p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-4 w-full sm:w-auto justify-between border-t sm:border-0 border-yellow-50 pt-3 sm:pt-0">
+                              {getStatusBadge(ord.status)}
+                              <button
+                                onClick={() => handleReorder(ord)}
+                                className="btn-primary text-[10px] py-1 px-4"
+                              >
+                                Reorder
+                              </button>
+                            </div>
                           </div>
-                        </div>
 
-                        {/* Progress Stepper Stepped Layout */}
-                        <div className="pt-2">
-                          <div className="flex justify-between relative">
-                            {/* Stepper background line */}
-                            <div className="absolute top-2.5 left-0 right-0 h-1 bg-zinc-100 -z-10"></div>
-                            <div 
-                              className="absolute top-2.5 left-0 h-1 bg-primary -z-10 transition-all duration-300"
-                              style={{
-                                width: ord.status === 'received' ? '0%' : ord.status === 'printing' ? '33%' : ord.status === 'shipped' ? '66%' : '100%'
-                              }}
-                            ></div>
+                          {/* Progress Stepper Stepped Layout */}
+                          <div className="pt-2">
+                            <div className="flex justify-between relative">
+                              {/* Stepper background line */}
+                              <div className="absolute top-2.5 left-0 right-0 h-1 bg-zinc-100 -z-10"></div>
+                              <div 
+                                className="absolute top-2.5 left-0 h-1 bg-primary -z-10 transition-all duration-300"
+                                style={{
+                                  width: ord.status === 'received' ? '0%' : ord.status === 'printing' ? '33%' : ord.status === 'shipped' ? '66%' : '100%'
+                                }}
+                              ></div>
 
-                            {['received', 'printing', 'shipped', 'delivered'].map((step, idx) => {
-                              const active = ord.status === step;
-                              const done = ['received', 'printing', 'shipped', 'delivered'].indexOf(ord.status) >= idx;
-                              return (
-                                <div key={step} className="flex flex-col items-center">
-                                  <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center text-[10px] font-black ${
-                                    active ? 'bg-primary border-primary text-dark-charcoal animate-pulse' : done ? 'bg-primary border-primary text-dark-charcoal' : 'bg-white border-zinc-200 text-zinc-400'
-                                  }`}>
-                                    {idx + 1}
+                              {['received', 'printing', 'shipped', 'delivered'].map((step, idx) => {
+                                const active = ord.status === step;
+                                const done = ['received', 'printing', 'shipped', 'delivered'].indexOf(ord.status) >= idx;
+                                return (
+                                  <div key={step} className="flex flex-col items-center">
+                                    <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center text-[10px] font-black ${
+                                      active ? 'bg-primary border-primary text-dark-charcoal animate-pulse' : done ? 'bg-primary border-primary text-dark-charcoal' : 'bg-white border-zinc-200 text-zinc-400'
+                                    }`}>
+                                      {idx + 1}
+                                    </div>
+                                    <span className={`text-[8px] font-black uppercase mt-1 tracking-wider ${done ? 'text-dark-charcoal' : 'text-zinc-400'}`}>
+                                      {step}
+                                    </span>
                                   </div>
-                                  <span className={`text-[8px] font-black uppercase mt-1 tracking-wider ${done ? 'text-dark-charcoal' : 'text-zinc-400'}`}>
-                                    {step}
-                                  </span>
-                                </div>
-                              );
-                            })}
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
 
-                      </div>
-                    ))}
-                  </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
