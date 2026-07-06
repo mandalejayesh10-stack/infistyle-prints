@@ -329,20 +329,10 @@ export default function LoginPanel() {
             </>
           )}
 
-          <div className="mt-6 pt-4 border-t border-gray-100 flex flex-col gap-3 items-center text-[10px] text-gray-400 font-medium">
-            <div className="flex items-center justify-between w-full">
-              <span>Secure Cognito Login</span>
-              <span>•</span>
-              <span>Multi-User System</span>
-            </div>
-            
-            <button
-              type="button"
-              onClick={handleBypassLogin}
-              className="mt-1 text-[9px] font-black text-primary hover:underline cursor-pointer border-2 border-primary px-3 py-1 rounded bg-yellow-50/10 tracking-widest uppercase"
-            >
-              🔧 DEV BYPASS: LOG IN AS ADMIN
-            </button>
+          <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-400 font-medium">
+            <span>Secure Cognito Login</span>
+            <span>•</span>
+            <span>Multi-User System</span>
           </div>
 
         </div>
